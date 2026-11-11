@@ -3,54 +3,50 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-</head>
-<body>
 <title>Trip Expense Ledger</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: phone-first expense log — summary strip, then a scan-or-type entry card beside the expense list; one column on phones */
+/* Layout: passcode gate, then a shared expense log — summary strip, scan-or-type entry card beside the list; one column on phones */
 :root{
   --bg:#f3f5f6; --surface:#ffffff; --sunk:#e8ecee; --line:#d3dade;
   --fg:#16202a; --muted:#5b6873; --accent:#0d5c63; --accent-fg:#ffffff; --accent-soft:#d6ebec;
   --ok:#2e7d4f; --warn:#a8650a; --bad:#b3372e;
-  --c1:#b8742a; --c2:#0d5c63; --c3:#3c7fb5; --c4:#7a5aa6; --c5:#4f8a5b; --c6:#a8456b; --c7:#8a8f94;
+  --c1:#b8742a; --c2:#0d5c63; --c3:#3c7fb5; --c4:#7a5aa6;
   --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
   --r:8px;
+  color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0f1519; --surface:#172026; --sunk:#1e2a31; --line:#2c3a42;
   --fg:#e3eaee; --muted:#93a2ac; --accent:#5cc0c7; --accent-fg:#06272a; --accent-soft:#16383b;
   --ok:#6fcf97; --warn:#e3a24a; --bad:#f07d73;
-  --c1:#e0a35c; --c2:#5cc0c7; --c3:#7fb2e0; --c4:#b49be0; --c5:#86c493; --c6:#e08aab; --c7:#9aa3a9;
+  --c1:#e0a35c; --c2:#5cc0c7; --c3:#7fb2e0; --c4:#b49be0;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f1519; --surface:#172026; --sunk:#1e2a31; --line:#2c3a42;
   --fg:#e3eaee; --muted:#93a2ac; --accent:#5cc0c7; --accent-fg:#06272a; --accent-soft:#16383b;
   --ok:#6fcf97; --warn:#e3a24a; --bad:#f07d73;
-  --c1:#e0a35c; --c2:#5cc0c7; --c3:#7fb2e0; --c4:#b49be0; --c5:#86c493; --c6:#e08aab; --c7:#9aa3a9;
+  --c1:#e0a35c; --c2:#5cc0c7; --c3:#7fb2e0; --c4:#b49be0;
   color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
+img{max-width:100%}
+[hidden]{display:none!important}
 .wrap{max-width:1160px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
 h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance}
 h1{font-size:1.5rem;font-weight:800;letter-spacing:-.01em}
 h2{font-size:1.02rem;font-weight:700}
 p{margin:0}
 .label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
-.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .muted{color:var(--muted)}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-
-.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:flex-end;justify-content:space-between}
-.brand{display:grid;gap:2px}
-.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .btn{border:1px solid var(--line);background:var(--surface);padding:8px 13px;border-radius:var(--r);font-weight:500}
 .btn:hover{border-color:var(--accent)}
 .btn:disabled{opacity:.55;cursor:default}
@@ -58,40 +54,46 @@ button{cursor:pointer}
 .btn.danger{color:var(--bad)}
 .btn.small{padding:4px 10px;font-size:.82rem}
 .btn.link{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;font-size:.82rem}
-select.plain{padding:7px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+select.plain{padding:7px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);max-width:100%}
 
-.banner{background:var(--accent-soft);color:var(--fg);border-radius:var(--r);padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;font-size:.88rem}
+/* lock screen */
+.lock{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.lockcard{width:min(380px,100%);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px 22px;display:grid;gap:16px}
+.lockcard .stub{border-top:2px dashed var(--line);margin:0 -22px;padding:14px 22px 0;font-size:.8rem;color:var(--muted)}
+.code{font-family:var(--f-mono);font-size:1.6rem;letter-spacing:.5em;text-align:center;padding:10px 8px 10px calc(8px + .5em)}
+
+.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:flex-end;justify-content:space-between}
+.brand{display:grid;gap:2px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.who{font-size:.85rem;color:var(--muted)}
 
 .summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:3px;min-width:0}
-.stat .v{font-family:var(--f-mono);font-size:1.15rem}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:3px;min-width:0;align-content:start}
+.stat .v{font-family:var(--f-mono);font-size:1.1rem}
 .stat .s{font-size:.8rem;color:var(--muted)}
 .stat.warn .v{color:var(--warn)} .stat.ok .v{color:var(--ok)}
 
 .grid{display:grid;grid-template-columns:380px minmax(0,1fr);gap:16px;align-items:start}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:14px;min-width:0}
 
-/* scan zone */
 .scan{border:2px dashed var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;background:var(--bg)}
 .scan.drag{border-color:var(--accent);background:var(--accent-soft)}
 .scan .row{display:flex;gap:12px;align-items:center}
 .scan .thumb{width:64px;height:80px;border-radius:6px;object-fit:cover;background:var(--sunk);flex:none;border:1px solid var(--line)}
-.scan .msg{font-size:.86rem;min-width:0}
-.scan .msg strong{display:block;font-size:.95rem}
+.scan .msg{font-size:.86rem;min-width:0;display:grid;gap:2px}
+.scan .msg strong{font-size:.95rem}
 .scanbtns{display:flex;flex-wrap:wrap;gap:8px}
 .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-1px;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .status-ok{color:var(--ok)} .status-bad{color:var(--bad)} .status-warn{color:var(--warn)}
 
-form.entry{display:grid;gap:11px}
+form{display:grid;gap:11px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.row3{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px}
 label.f{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500;min-width:0}
 .f input,.f select,.f textarea,.items input{padding:8px 9px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--fg);width:100%;min-width:0;transition:background-color .6s}
 .f textarea{resize:vertical;min-height:48px}
 .filled{background:var(--accent-soft)!important}
 .check{display:flex;gap:8px;align-items:center;font-size:.88rem}
-.conv{font-size:.82rem;color:var(--muted);background:var(--sunk);border-radius:var(--r);padding:7px 10px}
 .err{color:var(--bad);font-size:.84rem}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
 
@@ -105,7 +107,7 @@ label.f{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500;
 .filters{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:1px solid var(--line);background:transparent;border-radius:99px;padding:3px 11px;font-size:.8rem}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
-.day{font-size:.75rem;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;padding:6px 2px 2px;border-bottom:1px solid var(--line)}
+.day{font-size:.75rem;color:var(--muted);font-weight:600;display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between;padding:6px 2px 2px;border-bottom:1px solid var(--line)}
 .exp{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:start}
 .exp .ic{width:44px;height:52px;border-radius:6px;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:.8rem;color:#fff;border:0;padding:0;overflow:hidden}
 .exp .ic img{width:100%;height:100%;object-fit:cover}
@@ -117,10 +119,12 @@ label.f{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500;
 .exp .amt .o{font-family:var(--f-mono);font-size:.76rem;color:var(--muted)}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
 .pill{display:inline-block;font-size:.7rem;padding:1px 7px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
-.pill.reimb{color:var(--accent)} .pill.corp{color:var(--muted)} .pill.norcpt{color:var(--warn)} .pill.ai{color:var(--c4)}
+.pill.reimb{color:var(--accent)} .pill.corp{color:var(--muted)} .pill.norcpt{color:var(--warn)} .pill.ai{color:var(--c4)} .pill.person{color:var(--fg)}
 .rowact{display:flex;gap:4px;margin-top:4px}
 .empty{padding:28px 10px;text-align:center;color:var(--muted)}
 .foot{color:var(--muted);font-size:.8rem;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center}
+.notice{border-radius:var(--r);padding:12px 14px;background:var(--accent-soft);font-size:.88rem;display:grid;gap:6px}
+.notice.bad{background:var(--sunk);border-left:4px solid var(--bad)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 15px;border-radius:var(--r);font-size:.86rem;z-index:20;max-width:calc(100vw - 32px)}
 dialog{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--fg);padding:14px;max-width:calc(100vw - 32px)}
 dialog img{display:block;max-height:75vh;max-width:100%;border-radius:6px}
@@ -128,25 +132,46 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
 @media (max-width:900px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:420px){.row3{grid-template-columns:1fr 1fr}.row3 > :last-child{grid-column:1/-1}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<script src="config.js"></script>
+</head>
+<body>
 
-<div class="wrap">
+<!-- ============ Passcode gate ============ -->
+<section class="lock" id="lockView">
+  <form class="lockcard" id="lockForm" novalidate>
+    <div style="display:grid;gap:4px">
+      <span class="label">Trip Expense Ledger</span>
+      <h1>Enter passcode</h1>
+      <p class="muted">Ask the trip organiser for the passcode.</p>
+    </div>
+    <label class="f">Passcode<input class="code" type="password" id="passIn" inputmode="numeric" autocomplete="current-password" maxlength="32" required></label>
+    <label class="f">Your name<input type="text" id="nameIn" maxlength="40" autocomplete="nickname" placeholder="So friends know who added what"></label>
+    <p class="err" id="lockErr" hidden></p>
+    <button class="btn primary" type="submit" id="lockBtn">Open ledger</button>
+    <p class="stub">Everyone with the passcode sees and can edit every expense in this ledger.</p>
+  </form>
+</section>
+
+<!-- ============ App ============ -->
+<div class="wrap" id="appView" hidden>
   <header class="top">
     <div class="brand">
       <h1>Trip Expense Ledger</h1>
-      <p class="muted">Scan a receipt or type it in. Amounts stay in the currency on the receipt.</p>
+      <p class="muted">Shared with everyone who has the passcode. Amounts stay in the receipt's currency.</p>
     </div>
     <div class="toolbar">
-      <label class="label" for="monthSel">Showing</label>
-      <select id="monthSel" class="plain"></select>
+      <span class="who">You are <strong id="meName"></strong> · <button class="btn link" type="button" id="changeName">Change</button></span>
+      <button class="btn small" type="button" id="refreshBtn">Refresh</button>
+      <button class="btn small" type="button" id="lockNow">Lock</button>
     </div>
   </header>
 
-  <div class="banner" id="sampleBanner" hidden>
-    <span>These are <strong>example expenses</strong> so you can see how it works.</span>
-    <button class="btn small" type="button" id="clearSample">Clear examples</button>
+  <div class="toolbar">
+    <label class="label" for="monthSel">Showing</label>
+    <select id="monthSel" class="plain"></select>
+    <select id="personSel" class="plain" aria-label="Whose expenses"></select>
   </div>
 
   <section class="summary" id="summary" aria-label="Summary"></section>
@@ -158,10 +183,10 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
       <div class="scan" id="scanZone">
         <div class="row">
           <img class="thumb" id="scanThumb" alt="" hidden>
-          <div class="msg" id="scanMsg"><strong>Scan a receipt</strong><span class="muted">Take a photo or pick one. The merchant, items and total are filled in for you to check.</span></div>
+          <div class="msg" id="scanMsg"></div>
         </div>
         <div class="scanbtns">
-          <button class="btn primary" type="button" id="scanBtn" disabled><span class="spinner"></span>Preparing scanner…</button>
+          <button class="btn primary" type="button" id="scanBtn" disabled><span class="spinner"></span>Preparing…</button>
           <button class="btn" type="button" id="pickBtn" disabled>Choose photo</button>
           <button class="btn" type="button" id="retryBtn" hidden>Scan again</button>
           <button class="btn" type="button" id="stopBtn" hidden>Stop</button>
@@ -171,32 +196,32 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
         <input type="file" id="fileIn2" accept="image/*" class="sr" tabindex="-1" aria-hidden="true">
       </div>
 
-      <form class="entry" id="entryForm" novalidate>
+      <form id="entryForm" novalidate>
         <div class="row2">
           <label class="f">Date<input type="date" id="fDate"></label>
           <label class="f">Type<select id="fCat"></select></label>
         </div>
         <label class="f">Receipt name (merchant)<input type="text" id="fMerch" maxlength="80" placeholder="e.g. Taiwan Taxi, Din Tai Fung"></label>
-
         <div class="items">
           <div class="head"><span class="label">Items (optional)</span><button class="btn link" type="button" id="addItem">+ Add item</button></div>
           <div id="itemRows"></div>
           <div class="itemsum" id="itemSum" hidden></div>
         </div>
-
         <div class="row2">
           <label class="f">Total<input type="number" id="fTotal" step="0.01" min="0" inputmode="decimal" placeholder="0.00"></label>
           <label class="f">Currency<select id="fCur"></select></label>
         </div>
-
-        <label class="f">Paid with
-          <select id="fPay">
-            <option value="personal">Personal card / cash (claim back)</option>
-            <option value="corp">Corporate card</option>
-          </select>
-        </label>
+        <div class="row2">
+          <label class="f">Paid by<input type="text" id="fPerson" maxlength="40"></label>
+          <label class="f">Paid with
+            <select id="fPay">
+              <option value="personal">Own money</option>
+              <option value="corp">Shared card</option>
+            </select>
+          </label>
+        </div>
         <label class="check"><input type="checkbox" id="fRcpt" checked> I have the receipt</label>
-        <label class="f">Notes<textarea id="fNote" maxlength="200" placeholder="Who attended, project code, reason…"></textarea></label>
+        <label class="f">Notes<textarea id="fNote" maxlength="200" placeholder="Who was there, what it was for…"></textarea></label>
         <p class="err" id="formErr" hidden></p>
         <div class="actions">
           <button class="btn primary" type="submit" id="saveBtn">Add expense</button>
@@ -210,21 +235,28 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
         <h2 id="listTitle">Expenses</h2>
         <div class="filters" id="filters"></div>
       </div>
-      <div id="list"></div>
+      <div id="list"><p class="empty">Loading expenses…</p></div>
       <div class="foot">
-        <span id="storeNote">Saved in this browser only.</span>
+        <span id="syncNote">Saved to the shared database.</span>
         <button class="btn small" id="copyCsv" type="button">Copy as CSV</button>
       </div>
     </section>
   </div>
 </div>
 
+<!-- ============ Not configured ============ -->
+<section class="lock" id="setupView" hidden>
+  <div class="lockcard">
+    <h1>Database not connected yet</h1>
+    <p class="muted">Open <code>config.js</code> in this repository and fill in your Supabase project URL and anon key. The steps are in the README.</p>
+  </div>
+</section>
+
 <dialog id="imgDlg"><img id="imgBig" alt="Receipt photo"><div class="actions" style="justify-content:flex-end;margin-top:10px"><button class="btn" type="button" id="imgClose">Close</button></div></dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script>
 (function(){
-const KEY='trip-expense-ledger-v2';
 const CATS=[
   {id:'meal',name:'Meal',plural:'meals',short:'ME',c:'--c1'},
   {id:'taxi',name:'Taxi',plural:'taxis',short:'TX',c:'--c2'},
@@ -233,115 +265,185 @@ const CATS=[
 const CURS=['TWD','USD','JPY','KRW','SGD','HKD','EUR','GBP','AUD','THB','MYR','IDR','PHP','VND','INR','CNY'];
 const ZERO_DP=['JPY','KRW','VND','IDR','TWD'];
 const $=id=>document.getElementById(id);
-const uid=()=>Math.random().toString(36).slice(2,10);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const catOf=id=>CATS.find(c=>c.id===id)||CATS[CATS.length-1];
 const fmt=(n,cur)=>{const dp=ZERO_DP.includes(cur)?0:2;return (+n||0).toLocaleString('en-US',{minimumFractionDigits:dp,maximumFractionDigits:dp});};
+function toast(m){const el=$('toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2800);}
+const store={
+  get(k,s){try{return (s?sessionStorage:localStorage).getItem(k);}catch(e){return null;}},
+  set(k,v,s){try{(s?sessionStorage:localStorage).setItem(k,v);}catch(e){}},
+  del(k,s){try{(s?sessionStorage:localStorage).removeItem(k);}catch(e){}}
+};
+
+/* ---------- database (Supabase RPC) ---------- */
+const CFG=window.TRAVEL_CONFIG||{};
+const configured=!!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/YOUR_/.test(CFG.supabaseUrl+CFG.supabaseAnonKey));
+let pass=null;
+async function rpc(fn,args){
+  let r;
+  try{
+    r=await fetch(CFG.supabaseUrl.replace(/\/+$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',
+      headers:{'Content-Type':'application/json',apikey:CFG.supabaseAnonKey,Authorization:'Bearer '+CFG.supabaseAnonKey},
+      body:JSON.stringify(args)});
+  }catch(e){const er=new Error('Could not reach the database. Check your internet connection.');er.network=true;throw er;}
+  const t=await r.text();let d=null;try{d=t?JSON.parse(t):null;}catch(e){}
+  if(!r.ok){const er=new Error((d&&d.message)||('Database error '+r.status));er.code=d&&d.code;throw er;}
+  return d;
+}
+const isWrongPass=e=>e&&(e.code==='28P01'||/wrong passcode/i.test(e.message||''));
+function handleErr(e,fallback){
+  if(isWrongPass(e)){lock('The passcode was changed. Enter the new one.');return;}
+  toast(e&&e.message?e.message:fallback);
+}
+
+/* ---------- gate ---------- */
+let me=store.get('tel-name')||'';
+$('nameIn').value=me;
+function showApp(){$('lockView').hidden=true;$('appView').hidden=false;$('meName').textContent=me;}
+function lock(msg){
+  pass=null;store.del('tel-pass',true);
+  $('appView').hidden=true;$('lockView').hidden=false;
+  $('passIn').value='';$('lockErr').textContent=msg||'';$('lockErr').hidden=!msg;$('passIn').focus();
+}
+$('lockForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const p=$('passIn').value.trim(),n=$('nameIn').value.trim();
+  const err=!p?'Enter the passcode.':!n?'Enter your name.':'';
+  if(err){$('lockErr').textContent=err;$('lockErr').hidden=false;return;}
+  $('lockBtn').disabled=true;$('lockBtn').textContent='Checking…';$('lockErr').hidden=true;
+  try{
+    const ok=await rpc('verify_pass',{p});
+    if(!ok){$('lockErr').textContent='That passcode is not right. Try again.';$('lockErr').hidden=false;$('passIn').select();return;}
+    pass=p;me=n;store.set('tel-pass',p,true);store.set('tel-name',n);
+    showApp();resetForm();await loadAll();
+  }catch(e2){$('lockErr').textContent=e2.message;$('lockErr').hidden=false;}
+  finally{$('lockBtn').disabled=false;$('lockBtn').textContent='Open ledger';}
+});
+$('lockNow').onclick=()=>lock();
+$('changeName').onclick=()=>{
+  const n=$('meName');n.contentEditable='true';n.focus();
+  const sel=getSelection();sel.selectAllChildren(n);
+  const done=()=>{n.contentEditable='false';const v=n.textContent.trim().slice(0,40);if(v){me=v;store.set('tel-name',v);if(!editingId)$('fPerson').value=v;}n.textContent=me;n.onblur=n.onkeydown=null;};
+  n.onblur=done;n.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();n.blur();}};
+};
+
+/* ---------- state + render ---------- */
+let rows=[],filter='all',month='all',person='all',editingId=null,pendingDelete=null,photo=null;
+const imgCache={};
+
+async function loadAll(quiet){
+  try{
+    const d=await rpc('list_expenses',{p:pass});
+    rows=(d||[]).map(r=>({...r,date:String(r.date).slice(0,10),total:+r.total,items:Array.isArray(r.items)?r.items:[]}));
+    $('syncNote').textContent='Updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+' · shared with everyone who has the passcode';
+    renderAll();
+  }catch(e){
+    if(isWrongPass(e)){lock('The passcode was changed. Enter the new one.');return;}
+    $('list').innerHTML=`<div class="notice bad"><strong>Couldn't load expenses</strong><span>${esc(e.message)}</span><span><button class="btn small" type="button" id="retryLoad">Try again</button></span></div>`;
+    $('retryLoad').onclick=()=>loadAll();
+  }
+}
+$('refreshBtn').onclick=()=>loadAll();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&pass)loadAll(true);});
+
 function byCur(xs){const m={};xs.forEach(x=>{m[x.cur]=(m[x.cur]||0)+(+x.total||0);});return Object.entries(m).sort((a,b)=>xs.filter(x=>x.cur===b[0]).length-xs.filter(x=>x.cur===a[0]).length);}
-function curLines(xs){const e=byCur(xs);return e.length?e.map(([c,v])=>`<div>${fmt(v,c)} <span class="muted">${c}</span></div>`).join(''):'<div>0</div>';}
+function curLines(xs){const e=byCur(xs);return e.length?e.map(([c,v])=>`<div>${fmt(v,c)} <span class="muted">${esc(c)}</span></div>`).join(''):'<div>0</div>';}
 function curInline(xs){return byCur(xs).map(([c,v])=>`${fmt(v,c)} ${c}`).join(' · ');}
-function toast(m){const el=$('toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600);}
+function visible(){return rows.filter(x=>(month==='all'||x.date.slice(0,7)===month)&&(person==='all'||x.person===person));}
 
-function sampleState(){
-  const e=(date,cat,merch,items,total,cur,pay,rcpt,note)=>({id:uid(),date,cat,merch,items:items.map(([name,amt])=>({name,amt})),total,cur,pay,rcpt,note:note||'',img:null,scanned:false});
-  return {sample:true,lastCur:'TWD',expenses:[
-    e('2026-11-03','taxi','Taiwan Taxi',[],520,'TWD','personal',true,'Home to Taoyuan Airport'),
-    e('2026-11-03','meal','Airport café',[['Club sandwich',260],['Latte',140]],400,'TWD','personal',true),
-    e('2026-11-04','other','Narita Express',[],3250,'JPY','personal',true),
-    e('2026-11-04','meal','Ramen shop, Shinjuku',[['Tonkotsu ramen',1100],['Gyoza',450]],1550,'JPY','personal',true),
-    e('2026-11-05','meal','Izakaya dinner (4 pax)',[['Course menu x4',22000],['Drinks',6400]],28400,'JPY','corp',true,'Client team, 4 attendees'),
-    e('2026-11-05','taxi','Tokyo taxi',[],2860,'JPY','personal',false,'Driver had no printer'),
-    e('2026-11-06','other','Business hotel, 3 nights',[],54600,'JPY','corp',true)
-  ]};
-}
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.expenses)){
-  s.expenses.forEach(x=>{x.cat=catOf(x.cat).id;delete x.rate;});
-  if(!s.lastCur)s.lastCur=s.home||'TWD';delete s.home;delete s.rates;return s;}}catch(e){}return sampleState();}
-let state=load();
-let persisted=(()=>{try{return localStorage.getItem(KEY)!==null;}catch(e){return false;}})();
-let filter='all', month='all', editingId=null, pendingDelete=null, photo=null; // photo = {blob, thumb}
-
-function save(){
-  try{localStorage.setItem(KEY,JSON.stringify(state));persisted=true;return true;}
-  catch(e){return false;}
-}
-function setStoreNote(){
-  $('storeNote').textContent=persisted?'Saved in this browser only. Use Copy as CSV to keep a copy or submit a claim.':(state.sample?'Showing examples. Your entries save in this browser only.':'This browser is not saving data. Copy as CSV before you close the page.');
-}
-
-/* ---------- selects ---------- */
-function curOptions(sel,extra){const list=[...new Set([...CURS,...(extra||[])])];sel.innerHTML=list.map(c=>`<option>${c}</option>`).join('');}
-function fillSelects(){
-  $('fCat').innerHTML=CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
-  curOptions($('fCur'),[...state.expenses.map(x=>x.cur),state.lastCur]);
-}
-function ensureCur(cur){if(![...$('fCur').options].some(o=>o.value===cur)){const o=document.createElement('option');o.textContent=cur;$('fCur').appendChild(o);}}
-
-/* ---------- render ---------- */
-function visible(){return state.expenses.filter(x=>month==='all'||x.date.slice(0,7)===month);}
-function renderMonths(){
-  const ms=[...new Set(state.expenses.map(x=>x.date.slice(0,7)))].sort().reverse();
+function renderSelectors(){
+  const ms=[...new Set(rows.map(x=>x.date.slice(0,7)))].sort().reverse();
   if(month!=='all'&&!ms.includes(month))month='all';
-  $('monthSel').innerHTML=`<option value="all">All dates</option>`+ms.map(m=>{const d=new Date(m+'-01T00:00');return `<option value="${m}"${m===month?' selected':''}>${d.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</option>`;}).join('');
+  $('monthSel').innerHTML='<option value="all">All dates</option>'+ms.map(m=>`<option value="${m}"${m===month?' selected':''}>${new Date(m+'-01T00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'})}</option>`).join('');
+  const ps=[...new Set(rows.map(x=>x.person))].sort((a,b)=>a.localeCompare(b));
+  if(person!=='all'&&!ps.includes(person))person='all';
+  $('personSel').innerHTML='<option value="all">Everyone</option>'+ps.map(p=>`<option value="${esc(p)}"${p===person?' selected':''}>${esc(p)}${p===me?' (you)':''}</option>`).join('');
 }
+$('monthSel').onchange=()=>{month=$('monthSel').value;renderSummary();renderList();};
+$('personSel').onchange=()=>{person=$('personSel').value;renderSummary();renderList();};
+
 function renderSummary(){
-  const xs=visible();
-  const owed=xs.filter(x=>x.pay==='personal');
-  const miss=xs.filter(x=>!x.rcpt);
+  const xs=visible(),owed=xs.filter(x=>x.pay==='personal'),miss=xs.filter(x=>!x.rcpt);
   const counts=CATS.map(c=>{const n=xs.filter(x=>x.cat===c.id).length;return `<div>${n} <span class="muted">${n===1&&c.id!=='other'?c.name.toLowerCase():c.plural}</span></div>`;}).join('');
   $('summary').innerHTML=`
     <div class="stat"><span class="label">Total spend</span><span class="v">${curLines(xs)}</span><span class="s">${xs.length} expense${xs.length===1?'':'s'}</span></div>
-    <div class="stat"><span class="label">To claim back</span><span class="v">${curLines(owed)}</span><span class="s">Paid with your own money</span></div>
+    <div class="stat"><span class="label">Paid with own money</span><span class="v">${curLines(owed)}</span><span class="s">To settle up or claim</span></div>
     <div class="stat ${miss.length?'warn':'ok'}"><span class="label">Missing receipts</span><span class="v">${miss.length}</span><span class="s">${miss.length?esc(curInline(miss))+' without proof':'Every expense has a receipt'}</span></div>
     <div class="stat"><span class="label">By type</span><span class="v">${counts}</span></div>`;
 }
 function renderFilters(){
-  const opts=[['all','All'],['personal','To claim'],['norcpt','No receipt'],...CATS.map(c=>[c.id,c.name])];
+  const opts=[['all','All'],['personal','Own money'],['norcpt','No receipt'],...CATS.map(c=>[c.id,c.name])];
   $('filters').innerHTML=opts.map(([k,n])=>`<button type="button" class="chip" data-f="${k}" aria-pressed="${filter===k}">${esc(n)}</button>`).join('');
 }
 $('filters').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;filter=b.dataset.f;renderFilters();renderList();});
+
 function renderList(){
-  let xs=visible().sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
+  let xs=visible();
   if(filter==='personal')xs=xs.filter(x=>x.pay==='personal');
   else if(filter==='norcpt')xs=xs.filter(x=>!x.rcpt);
-  else if(filter!=='all')xs=xs.filter(x=>catOf(x.cat).id===filter);
-  if(!xs.length){$('list').innerHTML=`<p class="empty">${state.expenses.length?'No expenses match this view.':'No expenses yet. Scan a receipt or fill in the form to add your first one.'}</p>`;return;}
+  else if(filter!=='all')xs=xs.filter(x=>x.cat===filter);
+  if(!xs.length){$('list').innerHTML=`<p class="empty">${rows.length?'No expenses match this view.':'No expenses yet. Take a photo of a receipt or fill in the form to add the first one.'}</p>`;return;}
   let html='',last='';
   for(const x of xs){
-    if(x.date!==last){last=x.date;const dt=new Date(x.date+'T00:00');
-      html+=`<div class="day"><span>${dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span><span class="num">${esc(curInline(xs.filter(y=>y.date===x.date)))}</span></div>`;}
+    if(x.date!==last){last=x.date;
+      html+=`<div class="day"><span>${new Date(x.date+'T00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span><span class="num">${esc(curInline(xs.filter(y=>y.date===x.date)))}</span></div>`;}
     const c=catOf(x.cat);
-    const items=x.items&&x.items.length?x.items.slice(0,3).map(i=>esc(i.name)).join(' · ')+(x.items.length>3?` +${x.items.length-3} more`:''):'';
+    const items=x.items.length?x.items.slice(0,3).map(i=>esc(i.name)).join(' · ')+(x.items.length>3?` +${x.items.length-3} more`:''):'';
+    const thumb=x.has_img?(imgCache[x.id]?`<img src="${imgCache[x.id]}" alt="">`:`<span class="spinner" style="margin:0"></span>`):'';
     html+=`<div class="exp">
-      ${x.img?`<button class="ic" type="button" data-img="${x.id}" aria-label="View receipt photo"><img src="${x.img}" alt=""></button>`:`<div class="ic" style="background:var(${c.c})" aria-hidden="true">${c.short}</div>`}
+      ${x.has_img?`<button class="ic" type="button" data-img="${x.id}" style="background:var(--sunk)" aria-label="View receipt photo">${thumb}</button>`:`<div class="ic" style="background:var(${c.c})" aria-hidden="true">${c.short}</div>`}
       <div class="body">
         <span class="merch">${esc(x.merch||c.name)}</span>
         <span class="sub">${esc(c.name)}${items?' — '+items:''}</span>
         ${x.note?`<span class="sub">${esc(x.note)}</span>`:''}
-        <div class="tags"><span class="pill ${x.pay==='personal'?'reimb':'corp'}">${x.pay==='personal'?'To claim':'Corp card'}</span>${x.rcpt?'':'<span class="pill norcpt">No receipt</span>'}${x.scanned?'<span class="pill ai">Scanned</span>':''}</div>
+        <div class="tags"><span class="pill person">${esc(x.person)}</span><span class="pill ${x.pay==='personal'?'reimb':'corp'}">${x.pay==='personal'?'Own money':'Shared card'}</span>${x.rcpt?'':'<span class="pill norcpt">No receipt</span>'}${x.scanned?'<span class="pill ai">Scanned</span>':''}</div>
       </div>
       <div class="amt"><span class="h">${fmt(x.total,x.cur)}</span><span class="o">${esc(x.cur)}</span>
-        ${pendingDelete===x.id?`<div class="rowact"><button class="btn small danger" data-yes="${x.id}">Delete</button><button class="btn small" data-no="1">Keep</button></div>`
-        :`<div class="rowact"><button class="btn small" data-edit="${x.id}">Edit</button><button class="btn small" data-del="${x.id}" aria-label="Delete">✕</button></div>`}
+        ${pendingDelete===x.id?`<div class="rowact"><button class="btn small danger" type="button" data-yes="${x.id}">Delete</button><button class="btn small" type="button" data-no="1">Keep</button></div>`
+        :`<div class="rowact"><button class="btn small" type="button" data-edit="${x.id}">Edit</button><button class="btn small" type="button" data-del="${x.id}" aria-label="Delete">✕</button></div>`}
       </div></div>`;
   }
   $('list').innerHTML=html;
+  loadThumbs(xs.filter(x=>x.has_img&&!imgCache[x.id]).map(x=>x.id));
 }
-$('list').addEventListener('click',e=>{
+let thumbQueue=[],thumbActive=0;
+function loadThumbs(ids){
+  ids.forEach(id=>{if(!thumbQueue.includes(id)&&!loadThumbs.busy?.[id])thumbQueue.push(id);});
+  pump();
+}
+loadThumbs.busy={};
+function pump(){
+  while(thumbActive<3&&thumbQueue.length){
+    const id=thumbQueue.shift();if(imgCache[id]||loadThumbs.busy[id])continue;
+    thumbActive++;loadThumbs.busy[id]=1;
+    rpc('get_image',{p:pass,eid:id}).then(src=>{
+      if(typeof src==='string'&&src.startsWith('data:image/')){imgCache[id]=src;
+        const b=document.querySelector(`[data-img="${id}"]`);if(b)b.innerHTML=`<img src="${src}" alt="">`;}
+    }).catch(()=>{}).finally(()=>{thumbActive--;delete loadThumbs.busy[id];pump();});
+  }
+}
+function renderAll(){renderSelectors();renderSummary();renderFilters();renderList();}
+
+$('list').addEventListener('click',async e=>{
   const b=e.target.closest('button');if(!b)return;
-  if(b.dataset.img){const x=state.expenses.find(y=>y.id===b.dataset.img);$('imgBig').src=x.img;try{$('imgDlg').showModal();}catch(_){}}
+  if(b.dataset.img){const src=imgCache[b.dataset.img];if(src){$('imgBig').src=src;try{$('imgDlg').showModal();}catch(_){}}}
   else if(b.dataset.edit)startEdit(b.dataset.edit);
   else if(b.dataset.del){pendingDelete=b.dataset.del;renderList();}
   else if(b.dataset.no){pendingDelete=null;renderList();}
-  else if(b.dataset.yes){state.expenses=state.expenses.filter(x=>x.id!==b.dataset.yes);if(editingId===b.dataset.yes)resetForm();pendingDelete=null;save();renderAll();toast('Expense deleted');}
+  else if(b.dataset.yes){
+    b.disabled=true;b.textContent='Deleting…';
+    try{await rpc('delete_expense',{p:pass,eid:b.dataset.yes});if(editingId===b.dataset.yes)resetForm();pendingDelete=null;toast('Expense deleted');await loadAll();}
+    catch(err){pendingDelete=null;renderList();handleErr(err,'Could not delete the expense.');}
+  }
 });
 $('imgClose').onclick=()=>$('imgDlg').close();
-function renderAll(){
-  $('sampleBanner').hidden=!state.sample;
-  renderMonths();renderSummary();renderFilters();renderList();setStoreNote();
-}
 
-/* ---------- items editor ---------- */
+/* ---------- form ---------- */
+function curOptions(){const list=[...new Set([...CURS,...rows.map(x=>x.cur)])];$('fCur').innerHTML=list.map(c=>`<option>${esc(c)}</option>`).join('');}
+function ensureCur(cur){if(![...$('fCur').options].some(o=>o.value===cur)){const o=document.createElement('option');o.textContent=cur;$('fCur').appendChild(o);}}
+$('fCat').innerHTML=CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+curOptions();
+
 function addItemRow(name='',amt=''){
   const d=document.createElement('div');d.className='itemrow';
   d.innerHTML=`<input type="text" class="iname" maxlength="60" placeholder="Item" aria-label="Item name"><input type="number" class="iamt num" step="0.01" inputmode="decimal" placeholder="Amount" aria-label="Item amount"><button type="button" aria-label="Remove item">✕</button>`;
@@ -350,79 +452,73 @@ function addItemRow(name='',amt=''){
   d.querySelector('.iamt').oninput=updateItemSum;
   $('itemRows').appendChild(d);return d;
 }
-function readItems(){return [...$('itemRows').querySelectorAll('.itemrow')].map(r=>({name:r.querySelector('.iname').value.trim(),amt:parseFloat(r.querySelector('.iamt').value)})).filter(i=>i.name||i.amt).map(i=>({name:i.name||'Item',amt:isFinite(i.amt)?i.amt:0}));}
+function readItems(){return [...$('itemRows').querySelectorAll('.itemrow')].map(r=>({name:r.querySelector('.iname').value.trim(),amt:parseFloat(r.querySelector('.iamt').value)})).filter(i=>i.name||isFinite(i.amt)).map(i=>({name:(i.name||'Item').slice(0,60),amt:isFinite(i.amt)?i.amt:0})).slice(0,40);}
 function updateItemSum(){
   const it=readItems(),cur=$('fCur').value;
   if(!it.length){$('itemSum').hidden=true;return;}
   const sum=it.reduce((s,i)=>s+i.amt,0),tot=parseFloat($('fTotal').value);
-  let txt=`Items add up to <span class="num">${fmt(sum,cur)} ${cur}</span>`;
+  let txt=`Items add up to <span class="num">${fmt(sum,cur)} ${esc(cur)}</span>`;
   if(tot>0&&Math.abs(sum-tot)>0.009)txt+=` · total differs by <span class="num">${fmt(tot-sum,cur)}</span> (tax, tip or service charge)`;
   if(!(tot>0))txt+=` <button class="btn link" type="button" id="useSum">Use as total</button>`;
   $('itemSum').innerHTML=txt;$('itemSum').hidden=false;
-  const u=$('useSum');if(u)u.onclick=()=>{$('fTotal').value=Math.round(sum*100)/100;updateConv();};
+  const u=$('useSum');if(u)u.onclick=()=>{$('fTotal').value=Math.round(sum*100)/100;updateItemSum();};
 }
 $('addItem').onclick=()=>addItemRow().querySelector('.iname').focus();
-
-/* ---------- form ---------- */
-function updateConv(){updateItemSum();}
-$('fCur').onchange=updateConv;
-$('fTotal').oninput=updateConv;
+$('fCur').onchange=updateItemSum;$('fTotal').oninput=updateItemSum;
 
 function today(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);}
 function resetForm(){
   editingId=null;clearPhoto();
   $('formTitle').textContent='Add expense';$('saveBtn').textContent='Add expense';
   $('fDate').value=today();$('fCat').value='meal';$('fMerch').value='';$('fTotal').value='';$('fNote').value='';
-  $('fPay').value='personal';$('fRcpt').checked=true;$('formErr').hidden=true;$('itemRows').innerHTML='';
-  ensureCur(state.lastCur||'TWD');$('fCur').value=state.lastCur||'TWD';updateConv();
+  $('fPerson').value=me;$('fPay').value='personal';$('fRcpt').checked=true;$('formErr').hidden=true;$('itemRows').innerHTML='';
+  const lc=store.get('tel-cur')||'TWD';ensureCur(lc);$('fCur').value=lc;updateItemSum();
 }
 $('resetBtn').onclick=resetForm;
-function startEdit(id){
-  const x=state.expenses.find(e=>e.id===id);if(!x)return;resetForm();editingId=id;
+async function startEdit(id){
+  const x=rows.find(e=>e.id===id);if(!x)return;resetForm();editingId=id;
   $('formTitle').textContent='Edit expense';$('saveBtn').textContent='Save changes';
-  $('fDate').value=x.date;$('fCat').value=x.cat;$('fMerch').value=x.merch;$('fTotal').value=x.total;ensureCur(x.cur);$('fCur').value=x.cur;
-  $('fPay').value=x.pay;$('fRcpt').checked=x.rcpt;$('fNote').value=x.note;
-  (x.items||[]).forEach(i=>addItemRow(i.name,i.amt));
-  if(x.img){photo={blob:null,thumb:x.img,scanned:x.scanned};showPhoto(x.img);setScanMsg('<strong>Receipt photo attached</strong>');}
-  updateConv();$('formTitle').scrollIntoView({behavior:'smooth',block:'start'});
+  $('fDate').value=x.date;$('fCat').value=catOf(x.cat).id;$('fMerch').value=x.merch||'';$('fTotal').value=x.total;ensureCur(x.cur);$('fCur').value=x.cur;
+  $('fPerson').value=x.person;$('fPay').value=x.pay;$('fRcpt').checked=x.rcpt;$('fNote').value=x.note||'';
+  x.items.forEach(i=>addItemRow(i.name,i.amt));
+  if(x.has_img){photo={keep:true,thumb:imgCache[x.id]||null,scanned:x.scanned};if(photo.thumb)showPhoto(photo.thumb);else{$('removePhoto').hidden=false;}setScanMsg('<strong>Receipt photo attached</strong><span class="muted">Take a new photo to replace it.</span>');}
+  updateItemSum();$('formTitle').scrollIntoView({behavior:'smooth',block:'start'});
 }
-$('entryForm').addEventListener('submit',e=>{
+$('entryForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const total=parseFloat($('fTotal').value),cur=$('fCur').value,date=$('fDate').value;
+  const total=parseFloat($('fTotal').value),cur=$('fCur').value,date=$('fDate').value,who=$('fPerson').value.trim()||me;
   const err=!date?'Pick the date on the receipt.':!(total>0)?'Enter the total amount paid.':'';
   if(err){$('formErr').textContent=err;$('formErr').hidden=false;return;}
-  if(state.sample){state.expenses=[];state.sample=false;}
-  const rec={date,cat:$('fCat').value,merch:$('fMerch').value.trim(),items:readItems(),total,cur,pay:$('fPay').value,rcpt:$('fRcpt').checked,note:$('fNote').value.trim(),img:photo?photo.thumb:null,scanned:!!(photo&&photo.scanned)};
-  state.lastCur=cur;
-  let x;
-  if(editingId&&(x=state.expenses.find(y=>y.id===editingId)))Object.assign(x,rec);
-  else{x={id:uid(),...rec};state.expenses.push(x);}
-  let msg=editingId?'Expense updated':'Expense added';
-  if(!save()){
-    if(x.img){x.img=null;msg+=save()?'. Browser storage is full, so the photo was not kept.':'. Browser storage is not available: copy as CSV before leaving.';}
-    else msg+='. Browser storage is not available: copy as CSV before leaving.';
-  }
-  resetForm();renderAll();toast(msg);
+  $('formErr').hidden=true;
+  const rec={id:editingId||'',person:who,date,cat:$('fCat').value,merch:$('fMerch').value.trim(),items:readItems(),total,cur,pay:$('fPay').value,rcpt:$('fRcpt').checked,note:$('fNote').value.trim(),
+    img:photo&&!photo.keep?photo.thumb:null,keep_img:!!(photo&&photo.keep),scanned:!!(photo&&photo.scanned)};
+  const btn=$('saveBtn'),label=btn.textContent;btn.disabled=true;btn.textContent='Saving…';
+  try{
+    const id=await rpc('save_expense',{p:pass,e:rec});
+    if(rec.img&&id)imgCache[id]=rec.img;
+    if(!rec.img&&!rec.keep_img&&id)delete imgCache[id];
+    store.set('tel-cur',cur);
+    const wasEdit=!!editingId;resetForm();toast(wasEdit?'Expense updated':'Expense added');await loadAll();
+  }catch(err2){
+    if(isWrongPass(err2)){lock('The passcode was changed. Enter the new one.');return;}
+    $('formErr').textContent=err2.message||'Could not save. Try again.';$('formErr').hidden=false;
+  }finally{btn.disabled=false;if(btn.textContent==='Saving…')btn.textContent=label;}
 });
-$('clearSample').onclick=()=>{state={sample:false,lastCur:state.lastCur||'TWD',expenses:[]};save();fillSelects();renderAll();resetForm();toast('Examples cleared');};
-$('monthSel').onchange=()=>{month=$('monthSel').value;renderSummary();renderList();};
 
-/* ---------- receipt photo + scanning ---------- */
-let scanner=null, ctl=null, scanReady=false;
+/* ---------- receipt photo + scanning (scanning only inside Claude) ---------- */
+let scanner=null,ctl=null,scanReady=false;
 function setScanMsg(h){$('scanMsg').innerHTML=h;}
 function showPhoto(src){$('scanThumb').src=src;$('scanThumb').hidden=false;$('removePhoto').hidden=false;}
-function clearPhoto(){photo=null;$('scanThumb').hidden=true;$('scanThumb').removeAttribute('src');$('removePhoto').hidden=true;
-  setScanBtn();
-  setScanMsg(scanner?'<strong>Scan a receipt</strong><span class="muted">Take a photo with your phone camera, or choose one you already took. The merchant, items and total are filled in for you to check.</span>':'<strong>Attach a receipt photo</strong><span class="muted" id="noScanWhy">Automatic reading works when this page is opened in Claude. You can still attach the photo and type the details.</span>');}
+function idleMsg(){return scanner?'<strong>Scan a receipt</strong><span class="muted">Take a photo with your phone camera, or choose one you already took. The merchant, items and total are filled in for you to check.</span>'
+  :'<strong>Add a receipt photo</strong><span class="muted">Take a photo with your phone camera, or choose one you already took. Then type the details below.</span>';}
+function clearPhoto(){photo=null;$('scanThumb').hidden=true;$('scanThumb').removeAttribute('src');$('removePhoto').hidden=true;setScanBtn();setScanMsg(idleMsg());}
 $('removePhoto').onclick=()=>{if(ctl)ctl.abort();clearPhoto();};
-
 async function decode(file){
   if(window.createImageBitmap){try{return await createImageBitmap(file,{imageOrientation:'from-image'});}catch(e){}}
-  return await new Promise((res,rej)=>{const u=URL.createObjectURL(file);const i=new Image();i.onload=()=>{res(i);};i.onerror=()=>rej(new Error('decode'));i.src=u;});
+  return await new Promise((res,rej)=>{const u=URL.createObjectURL(file);const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('decode'));i.src=u;});
 }
-function draw(img,max){const w=img.width,h=img.height,s=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c;}
+function draw(img,max){const w=img.width,h=img.height,s=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);return c;}
 const toBlob=(c,q)=>new Promise(r=>c.toBlob(r,'image/jpeg',q));
-
 function flash(el){el.classList.add('filled');setTimeout(()=>el.classList.remove('filled'),2500);}
 function applyScan(d){
   const filled=[];
@@ -437,58 +533,49 @@ function applyScan(d){
   const extra=[];if(Number(d.tax)>0)extra.push('tax '+d.tax);if(Number(d.tip)>0)extra.push('tip '+d.tip);
   if(Number(d.total)>0){$('fTotal').value=Number(d.total);flash($('fTotal'));filled.push('total');}
   if(extra.length&&!$('fNote').value)$('fNote').value='Includes '+extra.join(', ');
-  $('fRcpt').checked=true;
-  updateConv();
-  return filled;
+  $('fRcpt').checked=true;updateItemSum();return filled;
 }
-const PROMPT=`The attached image is a photo of a purchase receipt that an employee is submitting as a business travel expense. Read it and reply with only one JSON object, no other text, in exactly this shape:
+const PROMPT=`The attached image is a photo of a purchase receipt from a trip. Read it and reply with only one JSON object, no other text, in exactly this shape:
 {"is_receipt": true, "merchant": "store or company name", "date": "YYYY-MM-DD", "currency": "JPY", "items": [{"name": "item name", "amount": 0}], "tax": 0, "tip": 0, "total": 0, "category": "meal"}
 Rules:
-- merchant: the business name printed on the receipt (keep the original language if it is not English, add an English name in brackets only if it is printed too).
-- items: each purchased line with its line total after quantity. Leave out tax, tip, discounts, change and payment lines. Use [] for taxi meters or receipts with no item lines.
+- merchant: the business name printed on the receipt.
+- items: each purchased line with its line total after quantity. Leave out tax, tip, discounts, change and payment lines. Use [] when there are no item lines.
 - total: the final amount paid, including tax, tip and service charge.
 - Numbers are plain numbers: no currency symbols, no thousands separators.
 - currency: ISO 4217 code, inferred from symbols, language and address (NT$ or a Taiwan address = TWD, ¥ or 円 in Japan = JPY, ₩ = KRW, S$ = SGD, HK$ = HKD).
 - date: the purchase date. Taiwan receipts may use the Minguo year (e.g. 115 = 2026).
-- category: one of "meal", "taxi", "other". Restaurants, cafés, food delivery and convenience-store food or drinks are "meal"; taxis and ride-hailing (Uber, Grab, LINE TAXI) are "taxi"; everything else (trains, buses, hotels, flights, supplies) is "other".
+- category: one of "meal", "taxi", "other". Restaurants, cafés, food delivery and convenience-store food or drinks are "meal"; taxis and ride-hailing are "taxi"; everything else is "other".
 - Use null for any field you cannot read. If the image is not a receipt, reply {"is_receipt": false}.`;
-
 async function scan(blob){
-  ctl=new AbortController();const my=ctl;
-  $('scanBtn').disabled=true;$('stopBtn').hidden=false;
-  setScanMsg('<strong><span class="spinner"></span>Reading the receipt…</strong><span class="muted">This usually takes 5–30 seconds. The first time, Claude asks you to allow this page to use it.</span>');
+  ctl=new AbortController();const my=ctl;setScanBtn();$('stopBtn').hidden=false;
+  setScanMsg('<strong><span class="spinner"></span>Reading the receipt…</strong><span class="muted">This usually takes 5–30 seconds.</span>');
   try{
     const d=await scanner.json(PROMPT,{images:[blob],signal:my.signal});
     if(!d||typeof d!=='object'||d.is_receipt===false){setScanMsg('<strong class="status-warn">This doesn’t look like a receipt</strong><span class="muted">Try a clearer, flatter photo, or type the details in.</span>');return;}
-    const f=applyScan(d);photo.scanned=true;
-    setScanMsg(f.length?`<strong class="status-ok">Filled in ${esc(f.join(', '))}</strong><span class="muted">Check the highlighted fields, then choose who paid and save.</span>`:'<strong class="status-warn">Couldn’t read the details</strong><span class="muted">The photo is attached. Type the details in.</span>');
+    const f=applyScan(d);if(photo)photo.scanned=true;
+    setScanMsg(f.length?`<strong class="status-ok">Filled in ${esc(f.join(', '))}</strong><span class="muted">Check the highlighted fields, then save.</span>`:'<strong class="status-warn">Couldn’t read the details</strong><span class="muted">The photo is attached. Type the details in.</span>');
   }catch(e){
     const code=e&&e.code;
-    if(code==='cancelled'){setScanMsg('<strong>Scan stopped</strong><span class="muted">The photo is still attached. Type the details or scan again.</span>');}
-    else if(code==='not_granted'||code==='sampling_disabled'||code==='images_unavailable'||code==='not_declared'||code==='capability_disabled'){scanner=null;setScanBtn();setScanMsg('<strong>Automatic reading is turned off</strong><span class="muted">The photo is attached. Type the details from the receipt.</span>');}
-    else if(code==='rate_limited'){setScanMsg('<strong class="status-warn">Too many scans right now</strong><span class="muted">Wait a minute and press Scan again, or type the details.</span>');}
-    else if(code==='image_rejected'){setScanMsg('<strong class="status-bad">This photo couldn’t be used</strong><span class="muted">Take it again as a JPEG or PNG.</span>');}
-    else if(code==='session_expired'){setScanMsg('<strong class="status-bad">Your Claude sign-in expired</strong><span class="muted">Sign in again, then scan.</span>');}
-    else{setScanMsg('<strong class="status-bad">The scan didn’t finish</strong><span class="muted">Press Scan again, or type the details.</span>');}
-  }finally{
-    if(ctl===my){ctl=null;$('stopBtn').hidden=true;setScanBtn();}
-  }
+    if(code==='cancelled')setScanMsg('<strong>Scan stopped</strong><span class="muted">The photo is still attached.</span>');
+    else if(['not_granted','sampling_disabled','images_unavailable','not_declared','capability_disabled'].includes(code)){scanner=null;setScanMsg('<strong>Automatic reading is off</strong><span class="muted">The photo is attached. Type the details in.</span>');}
+    else if(code==='rate_limited')setScanMsg('<strong class="status-warn">Too many scans right now</strong><span class="muted">Wait a minute and try again.</span>');
+    else setScanMsg('<strong class="status-bad">The scan didn’t finish</strong><span class="muted">Try again, or type the details.</span>');
+  }finally{if(ctl===my){ctl=null;$('stopBtn').hidden=true;setScanBtn();}}
 }
 $('stopBtn').onclick=()=>{if(ctl)ctl.abort();};
-
 async function handleFile(file){
   if(!file||!/^image\//.test(file.type||'image/')){toast('Choose a photo of the receipt.');return;}
   let img;try{img=await decode(file);}catch(e){toast('That photo could not be opened. Try a JPEG or PNG.');return;}
-  const thumb=draw(img,640).toDataURL('image/jpeg',0.6);
+  let q=0.6,thumb=draw(img,720).toDataURL('image/jpeg',q);
+  while(thumb.length>280000&&q>0.3){q-=0.1;thumb=draw(img,640).toDataURL('image/jpeg',q);}
   const big=await toBlob(draw(img,1800),0.88);
-  photo={blob:big,thumb,scanned:false};showPhoto(thumb);setScanBtn();
+  photo={blob:big,thumb,scanned:false,keep:false};showPhoto(thumb);setScanBtn();
   if(scanner)scan(big);
   else setScanMsg('<strong>Receipt photo attached</strong><span class="muted">Type the details from the receipt below.</span>');
 }
 ['fileIn','fileIn2'].forEach(id=>{$(id).onchange=()=>{const f=$(id).files[0];$(id).value='';handleFile(f);};});
 function setScanBtn(){
-  const busy=!!ctl||!scanReady;
-  $('scanBtn').disabled=busy;$('pickBtn').disabled=busy;
+  const busy=!!ctl||!scanReady;$('scanBtn').disabled=busy;$('pickBtn').disabled=busy;
   if(!scanReady)return;
   $('scanBtn').textContent=scanner?'Take photo & scan':'Take photo';
   $('retryBtn').hidden=!(scanner&&!busy&&photo&&photo.blob&&!photo.scanned);
@@ -500,26 +587,32 @@ const zone=$('scanZone');
 ['dragenter','dragover'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add('drag');}));
 ['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove('drag');}));
 zone.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)handleFile(f);});
-document.addEventListener('paste',e=>{const f=[...(e.clipboardData&&e.clipboardData.files||[])].find(f=>/^image\//.test(f.type));if(f)handleFile(f);});
-
+document.addEventListener('paste',e=>{if($('appView').hidden)return;const f=[...(e.clipboardData&&e.clipboardData.files||[])].find(f=>/^image\//.test(f.type));if(f)handleFile(f);});
 (async()=>{
   let s=null;
   try{if(window.claude&&claude.use){s=await claude.use('sample');if(s){const lim=await s.limits().catch(()=>null);if(!lim||!lim.images)s=null;}}}catch(e){s=null;}
-  scanner=s;scanReady=true;if(!photo)clearPhoto();setScanBtn();
+  scanner=s;scanReady=true;if(!photo)setScanMsg(idleMsg());setScanBtn();
 })();
 
 /* ---------- CSV ---------- */
 $('copyCsv').onclick=()=>{
   const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-  const rows=[['Date','Type','Merchant','Items','Total','Currency','Paid with','Receipt','Notes'].map(q).join(',')];
-  visible().sort((a,b)=>a.date<b.date?-1:1).forEach(x=>rows.push([x.date,catOf(x.cat).name,x.merch,(x.items||[]).map(i=>`${i.name} ${i.amt}`).join('; '),x.total,x.cur,x.pay==='personal'?'Personal (claim back)':'Corporate card',x.rcpt?'Yes':'No',x.note].map(q).join(',')));
-  const csv=rows.join('\n');
+  const out=[['Date','Paid by','Type','Merchant','Items','Total','Currency','Paid with','Receipt','Notes'].map(q).join(',')];
+  visible().slice().sort((a,b)=>a.date<b.date?-1:1).forEach(x=>out.push([x.date,x.person,catOf(x.cat).name,x.merch,x.items.map(i=>`${i.name} ${i.amt}`).join('; '),x.total,x.cur,x.pay==='personal'?'Own money':'Shared card',x.rcpt?'Yes':'No',x.note].map(q).join(',')));
+  const csv=out.join('\n');
   navigator.clipboard.writeText(csv).then(()=>toast('CSV copied. Paste it into a spreadsheet.')).catch(()=>{
     const ta=document.createElement('textarea');ta.value=csv;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
     try{document.execCommand('copy');toast('CSV copied');}catch(e){toast('Copy was blocked by this browser.');}ta.remove();});
 };
 
-fillSelects();renderAll();resetForm();
+/* ---------- start ---------- */
+setScanMsg(idleMsg());
+if(!configured){$('lockView').hidden=true;$('setupView').hidden=false;}
+else{
+  const saved=store.get('tel-pass',true);
+  if(saved&&me){pass=saved;showApp();resetForm();loadAll();}
+  else $('passIn').focus();
+}
 })();
 </script>
 </body>
