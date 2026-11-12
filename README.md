@@ -33,6 +33,9 @@ Each person can edit or delete only the records they entered.
 
 ## Good to know
 
+- **Signing in.** Each person enters their PIN once. The phone or browser remembers it until they press **Sign out**,
+  so reloading or reopening the page does not ask again.
+
 - **Location.** When you scan or upload a receipt, the page asks the browser for your current location and saves it
   with the record (shown as a map link). You can remove it before saving.
 - **DELETE ALL** in the Records section removes every record from every user, after a Yes/No check.

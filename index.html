@@ -310,14 +310,14 @@ function showApp(){
 }
 function lock(msg){
   $('delAllBox').hidden=true;
-  pass=null;me='';store.del('tel-pin',true);rows=[];
+  pass=null;me='';store.del('tel-pin');store.del('tel-pin',true);rows=[];
   $('appView').hidden=true;$('lockView').hidden=false;
   $('passIn').value='';$('lockErr').textContent=msg||'';$('lockErr').hidden=!msg;$('passIn').focus();
 }
 async function signIn(p){
   const d=await rpc('login',{p});
   if(!d||!d.name)return false;
-  pass=p;me=d.name;$('delAllBtn').hidden=d.can_delete_all!==true;users=Array.isArray(d.users)?d.users:[];store.set('tel-pin',p,true);
+  pass=p;me=d.name;$('delAllBtn').hidden=d.can_delete_all!==true;users=Array.isArray(d.users)?d.users:[];store.set('tel-pin',p);
   userFilter='all';dayFilter='all';showApp();resetForm();await loadAll();return true;
 }
 $('lockForm').addEventListener('submit',async e=>{
@@ -691,8 +691,15 @@ $('copyCsv').onclick=()=>{
 setScanMsg(IDLE);
 if(!configured){$('lockView').hidden=true;$('setupView').hidden=false;}
 else{
-  const saved=store.get('tel-pin',true);
-  if(saved)signIn(saved).then(ok=>{if(!ok)lock();}).catch(()=>lock('Could not reach the database. Try again.'));
+  // The PIN is remembered on this device until "Sign out", so reopening or reloading the page never asks again.
+  const saved=store.get('tel-pin')||store.get('tel-pin',true);
+  if(saved){
+    const btn=$('lockBtn'),inp=$('passIn');
+    inp.value=saved;inp.disabled=true;btn.disabled=true;btn.textContent='Signing you in…';
+    const done=()=>{inp.disabled=false;btn.disabled=false;btn.textContent='Sign in';};
+    signIn(saved).then(ok=>{done();if(!ok)lock('Your PIN was changed. Sign in again.');})
+      .catch(()=>{done();$('lockErr').textContent='Could not reach the database. Check your connection, then press Sign in.';$('lockErr').hidden=false;});
+  }
   else $('passIn').focus();
 }
 })();
