@@ -135,7 +135,7 @@ begin
       left(e->>'merch', 80),
       coalesce(e->'items', '[]'::jsonb),
       v_total,
-      upper(left(coalesce(e->>'cur', 'CNY'), 3)),
+      upper(left(coalesce(e->>'cur', 'RMB'), 3)),
       left(e->>'note', 200),
       v_img,
       coalesce((e->>'scanned')::boolean, false)
