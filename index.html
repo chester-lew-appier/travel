@@ -232,7 +232,7 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
       <div id="list"><p class="empty">Loading records…</p></div>
       <div class="foot">
         <span id="syncNote"></span>
-        <span class="actions"><button class="btn small" id="copyCsv" type="button">Copy as CSV</button><button class="btn small danger" id="delAllBtn" type="button">DELETE ALL</button></span>
+        <span class="actions"><button class="btn small" id="copyCsv" type="button">Copy as CSV</button><button class="btn small danger" id="delAllBtn" type="button" hidden>DELETE ALL</button></span>
       </div>
       <div class="notice" id="delAllBox" role="alertdialog" aria-labelledby="delAllQ" hidden>
         <strong id="delAllQ">Delete all records from all users?</strong>
@@ -317,7 +317,7 @@ function lock(msg){
 async function signIn(p){
   const d=await rpc('login',{p});
   if(!d||!d.name)return false;
-  pass=p;me=d.name;users=Array.isArray(d.users)?d.users:[];store.set('tel-pin',p,true);
+  pass=p;me=d.name;$('delAllBtn').hidden=d.can_delete_all!==true;users=Array.isArray(d.users)?d.users:[];store.set('tel-pin',p,true);
   userFilter='all';dayFilter='all';showApp();resetForm();await loadAll();return true;
 }
 $('lockForm').addEventListener('submit',async e=>{

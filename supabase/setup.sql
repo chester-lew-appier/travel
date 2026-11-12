@@ -48,6 +48,8 @@ alter table public.expenses alter column pay set default 'personal';
 alter table public.expenses add column if not exists lat double precision;  -- where the receipt was scanned
 alter table public.expenses add column if not exists lng double precision;
 
+alter table public.users add column if not exists can_delete_all boolean not null default false;  -- may use DELETE ALL
+
 -- Lock the tables: the website can never read or write them directly,
 -- only through the functions below, which check the PIN first.
 alter table public.users enable row level security;
@@ -80,6 +82,7 @@ begin
   u := public._user(p);
   return jsonb_build_object(
     'name', u,
+    'can_delete_all', (select can_delete_all from public.users where name = u),
     'users', (select jsonb_agg(jsonb_build_object('name', name, 'shares', shares) order by sort, name) from public.users)
   );
 exception when sqlstate '28P01' then
@@ -181,12 +184,15 @@ begin
   end if;
 end $$;
 
--- Deletes every record from every user. Any signed-in user can do this. Returns how many were deleted.
+-- Deletes every record from every user. Only users with can_delete_all may do this. Returns how many were deleted.
 create function public.delete_all(p text) returns integer
 language plpgsql security definer set search_path = public, extensions as $$
-declare n integer;
+declare n integer; u text;
 begin
-  perform public._user(p);
+  u := public._user(p);
+  if not exists (select 1 from public.users where name = u and can_delete_all) then
+    raise exception 'Only user2 can delete all records.';
+  end if;
   delete from public.expenses where true;
   get diagnostics n = row_count;
   return n;
@@ -200,11 +206,12 @@ grant execute on function public.save_expense(text, jsonb) to anon;
 grant execute on function public.delete_expense(text, uuid) to anon;
 
 -- The four users and their PINs (stored only as bcrypt hashes) -------------
--- user1, user2 and user3 split the total spending; user4 does not.
+-- user1, user2 and user3 split the total spending; user4 does not. Only user2 may use DELETE ALL.
 
-insert into public.users (name, pin_hash, shares, sort) values
-  ('user1', extensions.crypt('PIN_FOR_USER1', extensions.gen_salt('bf')), true, 1),
-  ('user2', extensions.crypt('PIN_FOR_USER2', extensions.gen_salt('bf')), true, 2),
-  ('user3', extensions.crypt('PIN_FOR_USER3', extensions.gen_salt('bf')), true, 3),
-  ('user4', extensions.crypt('PIN_FOR_USER4', extensions.gen_salt('bf')), false, 4)
-on conflict (name) do update set pin_hash = excluded.pin_hash, shares = excluded.shares, sort = excluded.sort;
+insert into public.users (name, pin_hash, shares, sort, can_delete_all) values
+  ('user1', extensions.crypt('PIN_FOR_USER1', extensions.gen_salt('bf')), true, 1, false),
+  ('user2', extensions.crypt('PIN_FOR_USER2', extensions.gen_salt('bf')), true, 2, true),
+  ('user3', extensions.crypt('PIN_FOR_USER3', extensions.gen_salt('bf')), true, 3, false),
+  ('user4', extensions.crypt('PIN_FOR_USER4', extensions.gen_salt('bf')), false, 4, false)
+on conflict (name) do update set pin_hash = excluded.pin_hash, shares = excluded.shares, sort = excluded.sort,
+  can_delete_all = excluded.can_delete_all;

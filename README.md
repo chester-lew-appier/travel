@@ -36,7 +36,7 @@ Each person can edit or delete only the records they entered.
 - **Location.** When you scan or upload a receipt, the page asks the browser for your current location and saves it
   with the record (shown as a map link). You can remove it before saving.
 - **DELETE ALL** in the Records section removes every record from every user, after a Yes/No check.
-  Any signed-in user can press it, and it cannot be undone.
+  Only user2 sees the button and can use it, and it cannot be undone.
 
 - **Settle up.** Every record counts toward the total, including anything user4 paid. user4 has no share,
   so whatever user4 paid is owed back to them by the others.
