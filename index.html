@@ -655,22 +655,35 @@ function loadOcr(){
   if(!ocrLib)ocrLib=new Promise((res,rej)=>{const s=document.createElement('script');s.src=OCR_SRC;s.onload=()=>res(window.Tesseract);s.onerror=()=>{ocrLib=null;rej(new Error('load'));};document.head.appendChild(s);});
   return ocrLib;
 }
-const NUM=/\d{1,3}(?:[,，]\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?/g;
-const nums=l=>(l.match(NUM)||[]).map(s=>parseFloat(s.replace(/[,，]/g,''))).filter(n=>isFinite(n));
-const TOTAL_RE=/grand\s*total|total|amount\s*due|balance\s*due|合\s*計|總\s*計|总\s*计|總\s*額|總金額|應付|应付|お会計|お買上|합\s*계/i;
+// An amount as printed: 1,234.50 · 1.234,50 · 33.50 · 33,50 (comma as the decimal mark, or a dot misread as a comma) · 539
+const MONEY='\\d{1,3}(?:[,，.]\\d{3})+(?:[.,，]\\d{1,2})?|\\d+[.,，]\\d{1,2}|\\d+';
+const NUM=new RegExp(MONEY,'g');
+// A separator followed by one or two final digits is the decimal mark; every other separator groups thousands.
+function toNum(str){
+  const t=String(str).replace(/，/g,','),m=t.match(/^(.*)[.,](\d{1,2})$/);
+  return m?parseFloat(m[1].replace(/[.,]/g,'')+'.'+m[2]):parseFloat(t.replace(/[.,]/g,''));
+}
+const nums=l=>(l.match(NUM)||[]).map(toNum).filter(n=>isFinite(n));
+const TOTAL_RE=/grand\s*total|total|amount\s*due|amount\s*payable|balance\s*due|jumlah|实付|實付|应收|應收|总价|總價|合\s*計|總\s*計|总\s*计|總\s*額|總金額|應付|应付|お会計|お買上|합\s*계/i;
 const SUB_RE=/sub\s*-?\s*total|小\s*計|小\s*计/i;
 const SKIP_RE=/tax|vat|gst|稅|税|service|服務費|cash|change|找零|現金|现金|お釣|visa|master|card|卡號|tel|phone|電話|电话|統編|統一編號|發票|invoice|no\.|#|qty|數量|table|桌號|guest|時間|time|date|日期/i;
+const ITEM_RE=new RegExp('^(.*?[A-Za-z\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af].*?)[\\s:：.]*(?:NT\\$|RM|S\\$|[$¥￥₩€£])?\\s*('+MONEY+')\\s*[A-Za-z元円]?$');
 function parseReceipt(text){
   const lines=text.split('\n').map(l=>l.replace(/\s+/g,' ').trim()).filter(l=>l.length>1);
   const out={merchant:null,date:null,currency:null,category:null,items:[],total:null};
   const wordy=l=>(l.match(/[A-Za-z぀-ヿ一-鿿가-힯]/g)||[]).length;
   out.merchant=(lines.slice(0,6).find(l=>wordy(l)>=2&&wordy(l)>=(l.match(/\d/g)||[]).length)||'').replace(/^[^A-Za-z0-9぀-ヿ一-鿿가-힯]+|[^A-Za-z0-9぀-ヿ一-鿿가-힯)]+$/g,'')||null;
-  // date: year first (2026-11-12, 2026/11/12, 2026年11月12日) or Minguo year (115/11/12)
+  // date: year first (2026-11-12, 2026/11/12, 2026年11月12日), Minguo year (115/11/12), or day first (12/11/2026)
   const pad=n=>String(n).padStart(2,'0');
   for(const l of lines){
     let m=l.match(/(20\d{2})\s?[-/.年]\s?(\d{1,2})\s?[-/.月]\s?(\d{1,2})/)||null,y;
     if(m)y=+m[1];else{m=l.match(/(?:^|[^\d])(1[0-3]\d)\s?[-/.年]\s?(\d{1,2})\s?[-/.月]\s?(\d{1,2})/);if(m)y=+m[1]+1911;}
     if(m&&+m[2]>=1&&+m[2]<=12&&+m[3]>=1&&+m[3]<=31){out.date=`${y}-${pad(m[2])}-${pad(m[3])}`;break;}
+  }
+  if(!out.date)for(const l of lines){
+    const m=l.match(/(?:^|[^\d])(\d{1,2})\s?[-/.]\s?(\d{1,2})\s?[-/.]\s?(20\d{2})(?!\d)/);if(!m)continue;
+    let dd=+m[1],mm=+m[2];if(mm>12&&dd<=12)[dd,mm]=[mm,dd];   // 10/31/2026 can only be month first
+    if(mm>=1&&mm<=12&&dd>=1&&dd<=31){out.date=`${m[3]}-${pad(mm)}-${pad(dd)}`;break;}
   }
   const all=text;
   out.currency=/S\$|SGD/.test(all)?'SGD':/\bRM\s?\d|MYR/.test(all)?'MYR':/RMB|CNY|人民币|人民幣|¥|￥/.test(all)?'RMB':null;
@@ -691,9 +704,9 @@ function parseReceipt(text){
   const end=totalIdx>=0?totalIdx:lines.length;
   for(const l of lines.slice(1,end)){
     if(SKIP_RE.test(l)||TOTAL_RE.test(l)||SUB_RE.test(l))continue;
-    const m=l.match(/^(.*?[A-Za-z぀-ヿ一-鿿가-힯].*?)[\s:：.]*(?:NT\$|[$¥￥₩€£])?\s*(\d{1,3}(?:[,，]\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)\s*[A-Za-z元円]?$/);
+    const m=l.match(ITEM_RE);
     if(!m)continue;
-    const amt=parseFloat(m[2].replace(/[,，]/g,'')),name=m[1].replace(/[\s:：.x×*@$¥￥]+$/,'').trim();
+    const amt=toNum(m[2]),name=m[1].replace(/[\s:：.x×*@$¥￥]+$/,'').trim();
     if(name.length<2||!(amt>0)||(out.total&&amt>out.total))continue;
     out.items.push({name,amount:amt});if(out.items.length>=20)break;
   }
