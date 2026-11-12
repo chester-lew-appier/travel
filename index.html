@@ -259,7 +259,7 @@ const CATS=[
   {id:'taxi',name:'Taxi',short:'TX',c:'--c2'},
   {id:'other',name:'Others',short:'OT',c:'--c3'}
 ];
-const CURS=['RMB','RM','SGD'];
+const CURS=['RMB','MYR','SGD'];
 const CUR_LABEL={};
 const DEFAULT_CUR='RMB';
 const ZERO_DP=['JPY','KRW','VND','IDR','TWD'];
@@ -565,7 +565,7 @@ function parseReceipt(text){
     if(m&&+m[2]>=1&&+m[2]<=12&&+m[3]>=1&&+m[3]<=31){out.date=`${y}-${pad(m[2])}-${pad(m[3])}`;break;}
   }
   const all=text;
-  out.currency=/S\$|SGD/.test(all)?'SGD':/\bRM\s?\d|MYR/.test(all)?'RM':/RMB|CNY|人民币|人民幣|¥|￥/.test(all)?'RMB':null;
+  out.currency=/S\$|SGD/.test(all)?'SGD':/\bRM\s?\d|MYR/.test(all)?'MYR':/RMB|CNY|人民币|人民幣|¥|￥/.test(all)?'RMB':null;
   out.category=/taxi|cab\b|uber|grab|計程車|计程车|車資|タクシー|택시/i.test(all)?'taxi':/restaurant|cafe|café|coffee|kitchen|bistro|grill|bar\b|diner|pizza|burger|noodle|餐|飯|饭|麵|面館|食堂|茶|咖啡|小吃|料理|ラーメン|居酒屋|식당/i.test(all)?'meal':null;
   // total: last number on a "total" line (not subtotal); else the largest plausible amount
   let totalIdx=-1;
