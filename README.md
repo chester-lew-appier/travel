@@ -9,7 +9,7 @@ The page has three sections:
 2. **Records** – everyone's records, with today's total and the overall total, filtered by user or all users.
 3. **Settle up** – the total is split equally between user1, user2 and user3, and the page works out who pays whom.
 
-Types are Meal, Taxi and Others. Amounts stay in the receipt's currency, and each currency is settled separately.
+Types are Meal, Taxi and Others. The currency starts on CNY (then remembers the last one you used). Amounts stay in the receipt's currency, and each currency is settled separately.
 
 ## How the data is stored
 
@@ -35,8 +35,8 @@ Each person can edit or delete only the records they entered.
 
 - **Settle up.** Every record counts toward the total, including anything user4 paid. user4 has no share,
   so whatever user4 paid is owed back to them by the others.
-- **Receipt scanning** runs in the browser with [Tesseract.js](https://github.com/naptha/tesseract.js) (English and
-  Traditional Chinese). The first scan downloads the reader. It works best on clear printed receipts and can
+- **Receipt scanning** runs in the browser with [Tesseract.js](https://github.com/naptha/tesseract.js) (English, Simplified
+  and Traditional Chinese). The first scan downloads the reader. It works best on clear printed receipts and can
   misread, so check the fields before saving.
 - **4-digit PINs can be guessed** by someone determined (each wrong try waits 1 second). Don't store anything
   you'd mind leaking.
