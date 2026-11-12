@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Trip Expense Ledger</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -92,6 +94,16 @@ label.f{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500;
 .f input,.f select,.f textarea,.items input{padding:8px 9px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--fg);width:100%;min-width:0;transition:background-color .6s}
 .f textarea{resize:vertical;min-height:44px}
 .totalf{color:var(--fg);font-weight:700}
+/* date shown as DD/MM/YYYY; the real date input sits invisibly on top so a tap opens the phone's calendar */
+.datebox{position:relative;display:block;padding:8px 30px 8px 9px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--fg);font-family:var(--f-mono);font-size:.95rem;font-weight:400;transition:background-color .6s}
+.datebox::after{content:"▾";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-family:var(--f-body)}
+.datebox input,.datechip input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;border:0;margin:0}
+.datebox:focus-within,.datechip:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.datechip{position:relative;display:inline-block}
+.themerow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+.themerow .dots{display:flex;gap:8px}
+.dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line);padding:0}
+.dot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--fg)}
 #fTotal{font-family:var(--f-mono);font-size:1.3rem;font-weight:600;padding:9px 10px;border:2px solid var(--accent);background:var(--accent-soft)}
 .catgroup{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500}
 .cats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -124,7 +136,7 @@ label.f{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500;
 .filterrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .filterrow .label{margin-right:4px}
 .chip{border:1px solid var(--line);background:transparent;border-radius:99px;padding:4px 12px;font-size:.84rem}
-.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.chip[aria-pressed="true"],.datechip[data-on="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .day{font-size:.75rem;color:var(--muted);font-weight:600;display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between;padding:8px 2px 2px;border-bottom:1px solid var(--line)}
 .exp{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:start}
 .exp .ic{width:44px;height:52px;border-radius:6px;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:.8rem;color:#fff;border:0;padding:0;overflow:hidden}
@@ -170,6 +182,30 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <script src="config.js"></script>
+<script>
+/* Colour themes: each sets the accent, its tint and the page background, for light and dark. Chosen per device. */
+(function(){
+  var T={
+    teal:  {name:'Teal',  l:['#0d5c63','#ffffff','#d6ebec','#f3f5f6'], d:['#5cc0c7','#06272a','#16383b','#0f1519']},
+    ocean: {name:'Ocean', l:['#1d5fc4','#ffffff','#dce8fb','#f2f5fa'], d:['#7fb0f5','#071a38','#17305a','#0e131b']},
+    sunset:{name:'Sunset',l:['#b8480f','#ffffff','#fbe5d8','#faf5f1'], d:['#f0a070','#331503','#4a2613','#18120e']},
+    forest:{name:'Forest',l:['#2a6b3c','#ffffff','#dcefe0','#f3f6f3'], d:['#7ccf90','#062310','#17391f','#0f1611']},
+    berry: {name:'Berry', l:['#9b2c6e','#ffffff','#f8dfee','#f9f4f7'], d:['#eb8fc4','#36082a','#47193a','#17101a']},
+    grape: {name:'Grape', l:['#5b3fa8','#ffffff','#e6dff7','#f5f4fa'], d:['#b29cf0','#170a3a','#2c2156','#12101a']}
+  };
+  var V=['--accent','--accent-fg','--accent-soft','--bg'],mq=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null,cur='teal';
+  function apply(name){
+    if(!T[name])name='teal';cur=name;
+    var st=document.documentElement.style,vals=T[name][mq&&mq.matches?'d':'l'];
+    V.forEach(function(v,i){st.setProperty(v,vals[i]);});
+    try{localStorage.setItem('tel-theme',name);}catch(e){}
+  }
+  var saved=null;try{saved=localStorage.getItem('tel-theme');}catch(e){}
+  apply(saved||'teal');
+  if(mq&&mq.addEventListener)mq.addEventListener('change',function(){apply(cur);});
+  window.TEL_THEME={list:T,apply:apply,current:function(){return cur;}};
+})();
+</script>
 </head>
 <body>
 
@@ -196,6 +232,7 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
   </div></div>
 
   <div class="wrap">
+    <div class="themerow" role="group" aria-label="Colour theme"><span class="label">Colour theme</span><span class="dots" id="themeDots"></span></div>
     <!-- 1. Add spending -->
     <section class="panel" aria-labelledby="formTitle">
       <div class="panelhead"><h2 id="formTitle">Add spending</h2><p class="muted" id="formSub">Saved under your name and shared with everyone.</p></div>
@@ -217,7 +254,7 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
       </div>
 
       <form id="entryForm" novalidate>
-        <label class="f">Date<input type="date" id="fDate"></label>
+        <label class="f">Date<span class="datebox"><span id="fDateTxt">DD/MM/YYYY</span><input type="date" id="fDate" aria-label="Date"></span></label>
         <div class="catgroup" role="group" aria-labelledby="catLbl"><span id="catLbl">Type</span><div class="cats" id="fCat"></div></div>
         <label class="f">Receipt name (merchant)<input type="text" id="fMerch" maxlength="80" placeholder="e.g. Taiwan Taxi, Din Tai Fung"></label>
         <div class="items">
@@ -301,6 +338,9 @@ const store={
 };
 function dayStr(offset){const d=new Date();d.setDate(d.getDate()+(offset||0));return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);}
 const today=()=>dayStr(0),yesterday=()=>dayStr(-1);
+const dmy=iso=>/^\d{4}-\d{2}-\d{2}/.test(iso||'')?iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4):'';
+const wdmy=iso=>new Date(iso+'T00:00').toLocaleDateString('en-GB',{weekday:'short'})+' '+dmy(iso);
+const openPicker=inp=>{try{if(inp.showPicker)inp.showPicker();}catch(e){}};
 
 /* ---------- database (Supabase RPC) ---------- */
 const CFG=window.TRAVEL_CONFIG||{};
@@ -338,7 +378,7 @@ async function signIn(p){
   const d=await rpc('login',{p});
   if(!d||!d.name)return false;
   pass=p;me=d.name;$('delAllBtn').hidden=d.can_delete_all!==true;users=Array.isArray(d.users)?d.users:[];store.set('tel-pin',p);
-  userFilter='all';dayFilter='all';showApp();resetForm();await loadAll();return true;
+  userFilter='all';dayFilter='all';pickDate='';showApp();resetForm();await loadAll();return true;
 }
 $('lockForm').addEventListener('submit',async e=>{
   e.preventDefault();
@@ -352,7 +392,7 @@ $('lockForm').addEventListener('submit',async e=>{
 $('lockNow').onclick=()=>lock();
 
 /* ---------- state ---------- */
-let rows=[],userFilter='all',dayFilter='all',editingId=null,pendingDelete=null,photo=null;
+let rows=[],userFilter='all',dayFilter='all',pickDate='',editingId=null,pendingDelete=null,photo=null;
 const imgCache={};
 async function loadAll(){
   try{
@@ -379,10 +419,18 @@ const forUser=()=>rows.filter(x=>userFilter==='all'||x.person===userFilter);
 function renderFilters(){
   const us=[['all','All users'],...userNames().map(n=>[n,n===me?n+' (you)':n])];
   $('userFilters').innerHTML='<span class="label">User</span>'+us.map(([k,n])=>`<button type="button" class="chip" data-u="${esc(k)}" aria-pressed="${userFilter===k}">${esc(n)}</button>`).join('');
-  $('dayFilters').innerHTML='<span class="label">Show</span>'+[['all','All records'],['today','Today'],['yesterday','Yesterday']].map(([k,n])=>`<button type="button" class="chip" data-d="${k}" aria-pressed="${dayFilter===k}">${n}</button>`).join('');
+  $('dayFilters').innerHTML='<span class="label">Show</span>'+[['all','All records'],['today','Today'],['yesterday','Yesterday']].map(([k,n])=>`<button type="button" class="chip" data-d="${k}" aria-pressed="${dayFilter===k}">${n}</button>`).join('')
+    +`<span class="chip datechip" data-on="${dayFilter==='date'}">${dayFilter==='date'?'Date: '+dmy(pickDate):'Specific date'}<input type="date" id="pickDate" aria-label="Show records for a specific date" value="${pickDate}"></span>`;
 }
 $('userFilters').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;userFilter=b.dataset.u;renderRecords();});
-$('dayFilters').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;dayFilter=b.dataset.d;renderRecords();});
+$('dayFilters').addEventListener('click',e=>{
+  if(e.target.id==='pickDate'){openPicker(e.target);return;}
+  const b=e.target.closest('.chip');if(!b||!b.dataset.d)return;dayFilter=b.dataset.d;renderRecords();
+});
+$('dayFilters').addEventListener('change',e=>{
+  if(e.target.id!=='pickDate')return;
+  pickDate=e.target.value||'';dayFilter=pickDate?'date':'all';renderRecords();
+});
 function renderTotals(){
   const xs=forUser(),t=today(),td=xs.filter(x=>x.date===t),who=userFilter==='all'?'All users':userFilter;
   $('totals').innerHTML=`
@@ -395,7 +443,7 @@ function renderList(){
   let html='',last='';
   for(const x of xs){
     if(x.date!==last){last=x.date;
-      html+=`<div class="day"><span>${new Date(x.date+'T00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span><span class="num">${esc(curInline(xs.filter(y=>y.date===x.date)))}</span></div>`;}
+      html+=`<div class="day"><span>${wdmy(x.date)}</span><span class="num">${esc(curInline(xs.filter(y=>y.date===x.date)))}</span></div>`;}
     const c=catOf(x.cat),mine=x.person===me;
     const items=x.items.length?x.items.slice(0,3).map(i=>esc(i.name)).join(' · ')+(x.items.length>3?` +${x.items.length-3} more`:''):'';
     const thumb=x.has_img?(imgCache[x.id]?`<img src="${imgCache[x.id]}" alt="">`:`<span class="spinner" style="margin:0"></span>`):'';
@@ -434,14 +482,14 @@ const mapUrl=o=>'https://www.google.com/maps?q='+(+o.lat)+','+(+o.lng);
 function shown(){
   const xs=forUser();
   if(dayFilter==='all')return xs;
-  const d=dayFilter==='today'?today():yesterday();
+  const d=dayFilter==='today'?today():dayFilter==='date'?pickDate:yesterday();
   return xs.filter(x=>x.date===d);
 }
 // Pie chart of spending by type for the records shown. One pie per currency, because amounts are not converted.
 function renderChart(){
   const xs=shown(),el=$('typeChart');
   if(!xs.length){el.innerHTML='';return;}
-  const who=userFilter==='all'?'All users':userFilter,when=dayFilter==='all'?'all records':dayFilter;
+  const who=userFilter==='all'?'All users':userFilter,when=dayFilter==='all'?'all records':dayFilter==='date'?dmy(pickDate):dayFilter;
   const R=60,C=66,pt=a=>[C+R*Math.sin(a),C-R*Math.cos(a)].map(v=>v.toFixed(2)).join(' ');
   el.innerHTML=[...new Set(xs.map(x=>x.cur))].sort().map(cur=>{
     const cx=xs.filter(x=>x.cur===cur),total=cx.reduce((t,x)=>t+x.total,0);
@@ -557,10 +605,14 @@ function updateItemSum(){
 }
 $('addItem').onclick=()=>addItemRow().querySelector('.iname').focus();
 $('fCur').onchange=updateItemSum;$('fTotal').oninput=updateItemSum;
+function setDate(v){$('fDate').value=v||'';$('fDateTxt').textContent=dmy(v)||'DD/MM/YYYY';}
+$('fDate').addEventListener('change',()=>setDate($('fDate').value));
+$('fDate').addEventListener('input',()=>setDate($('fDate').value));
+$('fDate').addEventListener('click',()=>openPicker($('fDate')));
 function resetForm(){
   editingId=null;clearPhoto();locRun++;loc=null;renderLoc();
   $('formTitle').textContent='Add spending';$('saveBtn').textContent='Add spending';
-  $('fDate').value=today();setCat('meal');$('fMerch').value='';$('fTotal').value='';$('fNote').value='';
+  setDate(today());setCat('meal');$('fMerch').value='';$('fTotal').value='';$('fNote').value='';
   $('formErr').hidden=true;$('itemRows').innerHTML='';
   const sc=store.get('tel-cur'),lc=CURS.includes(sc)?sc:DEFAULT_CUR;ensureCur(lc);$('fCur').value=lc;updateItemSum();
 }
@@ -568,7 +620,7 @@ $('resetBtn').onclick=resetForm;
 function startEdit(id){
   const x=rows.find(e=>e.id===id);if(!x)return;resetForm();editingId=id;
   $('formTitle').textContent='Edit record';$('saveBtn').textContent='Save changes';
-  $('fDate').value=x.date;setCat(catOf(x.cat).id);$('fMerch').value=x.merch||'';$('fTotal').value=x.total;ensureCur(x.cur);$('fCur').value=x.cur;$('fNote').value=x.note||'';
+  setDate(x.date);setCat(catOf(x.cat).id);$('fMerch').value=x.merch||'';$('fTotal').value=x.total;ensureCur(x.cur);$('fCur').value=x.cur;$('fNote').value=x.note||'';
   x.items.forEach(i=>addItemRow(i.name,i.amt));
   if(x.has_img){photo={keep:true,thumb:imgCache[x.id]||null,scanned:x.scanned};if(photo.thumb)showPhoto(photo.thumb);else $('removePhoto').hidden=false;setScanMsg('<strong>Receipt photo attached</strong><span class="muted">Upload a new photo to replace it.</span>');}
   if(x.lat!=null&&x.lng!=null){loc={lat:+x.lat,lng:+x.lng};renderLoc();}
@@ -637,7 +689,7 @@ function flash(el){el.classList.add('filled');setTimeout(()=>el.classList.remove
 function applyScan(d){
   const filled=[];
   if(d.merchant){$('fMerch').value=String(d.merchant).slice(0,80);flash($('fMerch'));filled.push('receipt name');}
-  if(d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date)){$('fDate').value=d.date;flash($('fDate'));filled.push('date');}
+  if(d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date)){setDate(d.date);flash($('fDate').parentElement);filled.push('date');}
   if(CATS.some(c=>c.id===d.category))setCat(d.category);
   if(d.currency){ensureCur(d.currency);$('fCur').value=d.currency;flash($('fCur'));}
   $('itemRows').innerHTML='';
@@ -804,7 +856,7 @@ async function exportPdf(){
     const newPage=()=>{if(page)flush();page++;g.fillStyle='#fff';g.fillRect(0,0,W,H);y=M;};
     newPage();
     // header
-    const who=userFilter==='all'?'All users':userFilter,when=dayFilter==='all'?'all records':dayFilter==='today'?'today ('+today()+')':'yesterday ('+yesterday()+')';
+    const who=userFilter==='all'?'All users':userFilter,when=dayFilter==='all'?'all records':dayFilter==='today'?'today ('+dmy(today())+')':dayFilter==='date'?dmy(pickDate):'yesterday ('+dmy(yesterday())+')';
     font(44,800);g.fillStyle=INK;g.fillText('Trip Expense Ledger',M,y);y+=60;
     font(22);g.fillStyle=MUTED;g.fillText(`${who} · ${when} · ${xs.length} record${xs.length===1?'':'s'}`,M,y);y+=32;
     g.fillText(`Exported ${new Date().toLocaleString([], {dateStyle:'medium',timeStyle:'short'})} by ${me}`,M,y);y+=44;
@@ -826,7 +878,7 @@ async function exportPdf(){
       font(28,700);const amount=`${fmt(x.total,x.cur)} ${x.cur}`,aw=g.measureText(amount).width;
       const title=wrap(x.merch||c.name,tw-aw-24);
       font(20);
-      const meta=`${new Date(x.date+'T00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})} · ${x.person} · ${c.name}`;
+      const meta=`${wdmy(x.date)} · ${x.person} · ${c.name}`;
       const items=x.items.slice(0,14),more=x.items.length-items.length;
       const note=x.note?wrap('Note: '+x.note,tw):[];
       const textH=title.length*36+6+28+(items.length?10+items.length*27+(more>0?27:0):0)+(note.length?8+note.length*27:0)+(x.lat!=null&&x.lng!=null?8+27:0);
@@ -862,10 +914,18 @@ $('exportPdf').onclick=exportPdf;
 $('copyCsv').onclick=()=>{
   const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
   const out=[['Date','User','Type','Receipt name','Items','Total','Currency','Notes','Location'].map(q).join(',')];
-  forUser().slice().sort((a,b)=>a.date<b.date?-1:1).forEach(x=>out.push([x.date,x.person,catOf(x.cat).name,x.merch,x.items.map(i=>`${i.name} ${i.amt}`).join('; '),x.total,x.cur,x.note,x.lat!=null&&x.lng!=null?locText(x):''].map(q).join(',')));
+  forUser().slice().sort((a,b)=>a.date<b.date?-1:1).forEach(x=>out.push([dmy(x.date),x.person,catOf(x.cat).name,x.merch,x.items.map(i=>`${i.name} ${i.amt}`).join('; '),x.total,x.cur,x.note,x.lat!=null&&x.lng!=null?locText(x):''].map(q).join(',')));
   const csv=out.join('\n');
   navigator.clipboard.writeText(csv).then(()=>toast('CSV copied. Paste it into a spreadsheet.')).catch(()=>toast('Copy was blocked by this browser.'));
 };
+
+/* ---------- colour theme ---------- */
+function renderThemes(){
+  const T=window.TEL_THEME;if(!T)return;
+  $('themeDots').innerHTML=Object.entries(T.list).map(([k,t])=>`<button type="button" class="dot" data-theme-name="${k}" style="background:${t.l[0]}" title="${t.name}" aria-label="${t.name} theme" aria-pressed="${T.current()===k}"></button>`).join('');
+}
+$('themeDots').addEventListener('click',e=>{const b=e.target.closest('.dot');if(!b)return;window.TEL_THEME.apply(b.dataset.themeName);renderThemes();});
+renderThemes();
 
 /* ---------- start ---------- */
 setScanMsg(IDLE);

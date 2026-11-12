@@ -33,6 +33,8 @@ Each person can edit or delete only the records they entered.
 
 ## Good to know
 
+- **Dates** are shown as DD/MM/YYYY. **Colour theme** (six choices, top of the page) is remembered per device.
+
 - **Export PDF** in the Records section saves the records currently shown (after the filters), with their
   receipt photos, as a PDF file.
 
