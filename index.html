@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: passcode gate, then a shared expense log — summary strip, scan-or-type entry card beside the list; one column on phones */
+/* Layout: PIN gate, then one column of three sections — add spending, records with filters, settle up */
 :root{
   --bg:#f3f5f6; --surface:#ffffff; --sunk:#e8ecee; --line:#d3dade;
   --fg:#16202a; --muted:#5b6873; --accent:#0d5c63; --accent-fg:#ffffff; --accent-soft:#d6ebec;
@@ -36,10 +36,10 @@
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
 img{max-width:100%}
 [hidden]{display:none!important}
-.wrap{max-width:1160px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+.wrap{max-width:760px;margin:0 auto;padding-block:18px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
 h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance}
-h1{font-size:1.5rem;font-weight:800;letter-spacing:-.01em}
-h2{font-size:1.02rem;font-weight:700}
+h1{font-size:1.4rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.08rem;font-weight:700}
 p{margin:0}
 .label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
 .muted{color:var(--muted)}
@@ -54,27 +54,24 @@ button{cursor:pointer}
 .btn.danger{color:var(--bad)}
 .btn.small{padding:4px 10px;font-size:.82rem}
 .btn.link{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;font-size:.82rem}
-select.plain{padding:7px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);max-width:100%}
 
 /* lock screen */
 .lock{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.lockcard{width:min(380px,100%);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px 22px;display:grid;gap:16px}
+.lockcard{width:min(360px,100%);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px 22px;display:grid;gap:16px}
 .lockcard .stub{border-top:2px dashed var(--line);margin:0 -22px;padding:14px 22px 0;font-size:.8rem;color:var(--muted)}
-.code{font-family:var(--f-mono);font-size:1.6rem;letter-spacing:.5em;text-align:center;padding:10px 8px 10px calc(8px + .5em)}
+.code{font-family:var(--f-mono);font-size:1.6rem;letter-spacing:.5em;text-align:center;padding:10px 8px 10px calc(8px + .5em)!important}
 
-.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:flex-end;justify-content:space-between}
-.brand{display:grid;gap:2px}
-.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.who{font-size:.85rem;color:var(--muted)}
+/* signed-in bar */
+.userbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--accent);color:var(--accent-fg)}
+.userbar .in{max-width:760px;margin:0 auto;padding-block:9px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:10px;align-items:center;justify-content:space-between}
+.userbar .me{display:flex;gap:9px;align-items:center;min-width:0}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-fg);color:var(--accent);display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:.85rem;flex:none}
+.userbar strong{font-family:var(--f-display);font-size:1.05rem}
+.userbar .btn{background:transparent;color:var(--accent-fg);border-color:currentColor}
+.userbar .acts{display:flex;gap:6px}
 
-.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:3px;min-width:0;align-content:start}
-.stat .v{font-family:var(--f-mono);font-size:1.1rem}
-.stat .s{font-size:.8rem;color:var(--muted)}
-.stat.warn .v{color:var(--warn)} .stat.ok .v{color:var(--ok)}
-
-.grid{display:grid;grid-template-columns:380px minmax(0,1fr);gap:16px;align-items:start}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:14px;min-width:0}
+.panelhead{display:grid;gap:2px}
 
 .scan{border:2px dashed var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;background:var(--bg)}
 .scan.drag{border-color:var(--accent);background:var(--accent-soft)}
@@ -91,23 +88,25 @@ form{display:grid;gap:11px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 label.f{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500;min-width:0}
 .f input,.f select,.f textarea,.items input{padding:8px 9px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--fg);width:100%;min-width:0;transition:background-color .6s}
-.f textarea{resize:vertical;min-height:48px}
+.f textarea{resize:vertical;min-height:44px}
 .filled{background:var(--accent-soft)!important}
-.check{display:flex;gap:8px;align-items:center;font-size:.88rem}
 .err{color:var(--bad);font-size:.84rem}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
-
 .items{display:grid;gap:6px}
 .items .head{display:flex;justify-content:space-between;align-items:center}
-.itemrow{display:grid;grid-template-columns:minmax(0,1fr) 96px 30px;gap:6px}
+.itemrow{display:grid;grid-template-columns:minmax(0,1fr) 96px 30px;gap:6px;margin-bottom:6px}
 .itemrow button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);color:var(--muted)}
 .itemsum{font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
 
-.listhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
-.filters{display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:1px solid var(--line);background:transparent;border-radius:99px;padding:3px 11px;font-size:.8rem}
+.totals{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;display:grid;gap:3px;min-width:0;align-content:start}
+.stat .v{font-family:var(--f-mono);font-size:1.12rem}
+.stat .s{font-size:.78rem;color:var(--muted)}
+.filterrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.filterrow .label{margin-right:4px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:99px;padding:4px 12px;font-size:.84rem}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
-.day{font-size:.75rem;color:var(--muted);font-weight:600;display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between;padding:6px 2px 2px;border-bottom:1px solid var(--line)}
+.day{font-size:.75rem;color:var(--muted);font-weight:600;display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between;padding:8px 2px 2px;border-bottom:1px solid var(--line)}
 .exp{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line);align-items:start}
 .exp .ic{width:44px;height:52px;border-radius:6px;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:.8rem;color:#fff;border:0;padding:0;overflow:hidden}
 .exp .ic img{width:100%;height:100%;object-fit:cover}
@@ -118,67 +117,69 @@ label.f{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500;
 .exp .amt .h{font-family:var(--f-mono);font-weight:500}
 .exp .amt .o{font-family:var(--f-mono);font-size:.76rem;color:var(--muted)}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
-.pill{display:inline-block;font-size:.7rem;padding:1px 7px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
-.pill.reimb{color:var(--accent)} .pill.corp{color:var(--muted)} .pill.norcpt{color:var(--warn)} .pill.ai{color:var(--c4)} .pill.person{color:var(--fg)}
+.pill{display:inline-block;font-size:.72rem;padding:1px 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.pill.me{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.pill.ai{color:var(--c4)}
 .rowact{display:flex;gap:4px;margin-top:4px}
-.empty{padding:28px 10px;text-align:center;color:var(--muted)}
+.empty{padding:24px 10px;text-align:center;color:var(--muted)}
 .foot{color:var(--muted);font-size:.8rem;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center}
-.notice{border-radius:var(--r);padding:12px 14px;background:var(--accent-soft);font-size:.88rem;display:grid;gap:6px}
-.notice.bad{background:var(--sunk);border-left:4px solid var(--bad)}
+.notice{border-radius:var(--r);padding:12px 14px;background:var(--sunk);border-left:4px solid var(--bad);font-size:.88rem;display:grid;gap:6px}
+
+/* settle up */
+.settle{display:grid;gap:12px}
+.cur{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cur .hd{background:var(--sunk);padding:9px 13px;display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between;align-items:baseline}
+.cur .hd strong{font-family:var(--f-display)}
+.cur .bd{padding:12px 13px;display:grid;gap:12px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:right;padding:5px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+td.pos{color:var(--ok)} td.neg{color:var(--bad)}
+.pays{display:grid;gap:6px}
+.payline{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;background:var(--accent-soft);border-radius:var(--r);padding:9px 12px}
+.payline .who{font-weight:600}
+.payline .amt{font-family:var(--f-mono);font-weight:500}
+.even{color:var(--ok);font-weight:600}
+
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 15px;border-radius:var(--r);font-size:.86rem;z-index:20;max-width:calc(100vw - 32px)}
 dialog{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--fg);padding:14px;max-width:calc(100vw - 32px)}
 dialog img{display:block;max-height:75vh;max-width:100%;border-radius:6px}
 dialog::backdrop{background:rgb(0 0 0 / .5)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-
-@media (max-width:900px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <script src="config.js"></script>
 </head>
 <body>
 
-<!-- ============ Passcode gate ============ -->
+<!-- ============ PIN gate ============ -->
 <section class="lock" id="lockView">
   <form class="lockcard" id="lockForm" novalidate>
     <div style="display:grid;gap:4px">
       <span class="label">Trip Expense Ledger</span>
-      <h1>Enter passcode</h1>
-      <p class="muted">Ask the trip organiser for the passcode.</p>
+      <h1>Enter your PIN</h1>
+      <p class="muted">Each person has their own PIN. It signs you in as yourself.</p>
     </div>
-    <label class="f">Passcode<input class="code" type="password" id="passIn" inputmode="numeric" autocomplete="current-password" maxlength="32" required></label>
-    <label class="f">Your name<input type="text" id="nameIn" maxlength="40" autocomplete="nickname" placeholder="So friends know who added what"></label>
+    <label class="f">PIN<input class="code" type="password" id="passIn" inputmode="numeric" autocomplete="off" maxlength="12" required></label>
     <p class="err" id="lockErr" hidden></p>
-    <button class="btn primary" type="submit" id="lockBtn">Open ledger</button>
-    <p class="stub">Everyone with the passcode sees and can edit every expense in this ledger.</p>
+    <button class="btn primary" type="submit" id="lockBtn">Sign in</button>
+    <p class="stub">Everything you enter is shared with the other people on the trip.</p>
   </form>
 </section>
 
 <!-- ============ App ============ -->
-<div class="wrap" id="appView" hidden>
-  <header class="top">
-    <div class="brand">
-      <h1>Trip Expense Ledger</h1>
-      <p class="muted">Shared with everyone who has the passcode. Amounts stay in the receipt's currency.</p>
-    </div>
-    <div class="toolbar">
-      <span class="who">You are <strong id="meName"></strong> · <button class="btn link" type="button" id="changeName">Change</button></span>
-      <button class="btn small" type="button" id="refreshBtn">Refresh</button>
-      <button class="btn small" type="button" id="lockNow">Lock</button>
-    </div>
-  </header>
+<div id="appView" hidden>
+  <div class="userbar"><div class="in">
+    <div class="me"><span class="avatar" id="meAvatar"></span><span>Signed in as <strong id="meName"></strong></span></div>
+    <div class="acts"><button class="btn small" type="button" id="refreshBtn">Refresh</button><button class="btn small" type="button" id="lockNow">Sign out</button></div>
+  </div></div>
 
-  <div class="toolbar">
-    <label class="label" for="monthSel">Showing</label>
-    <select id="monthSel" class="plain"></select>
-    <select id="personSel" class="plain" aria-label="Whose expenses"></select>
-  </div>
-
-  <section class="summary" id="summary" aria-label="Summary"></section>
-
-  <div class="grid">
+  <div class="wrap">
+    <!-- 1. Add spending -->
     <section class="panel" aria-labelledby="formTitle">
-      <h2 id="formTitle">Add expense</h2>
+      <div class="panelhead"><h2 id="formTitle">Add spending</h2><p class="muted" id="formSub">Saved under your name and shared with everyone.</p></div>
 
       <div class="scan" id="scanZone">
         <div class="row">
@@ -186,10 +187,9 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
           <div class="msg" id="scanMsg"></div>
         </div>
         <div class="scanbtns">
-          <button class="btn primary" type="button" id="scanBtn" disabled><span class="spinner"></span>Preparing…</button>
-          <button class="btn" type="button" id="pickBtn" disabled>Choose photo</button>
+          <button class="btn primary" type="button" id="scanBtn">Take photo &amp; scan</button>
+          <button class="btn" type="button" id="pickBtn">Upload receipt</button>
           <button class="btn" type="button" id="retryBtn" hidden>Scan again</button>
-          <button class="btn" type="button" id="stopBtn" hidden>Stop</button>
           <button class="btn" type="button" id="removePhoto" hidden>Remove photo</button>
         </div>
         <input type="file" id="fileIn" accept="image/*" capture="environment" class="sr" tabindex="-1" aria-hidden="true">
@@ -211,35 +211,32 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
           <label class="f">Total<input type="number" id="fTotal" step="0.01" min="0" inputmode="decimal" placeholder="0.00"></label>
           <label class="f">Currency<select id="fCur"></select></label>
         </div>
-        <div class="row2">
-          <label class="f">Paid by<input type="text" id="fPerson" maxlength="40"></label>
-          <label class="f">Paid with
-            <select id="fPay">
-              <option value="personal">Own money</option>
-              <option value="corp">Shared card</option>
-            </select>
-          </label>
-        </div>
-        <label class="check"><input type="checkbox" id="fRcpt" checked> I have the receipt</label>
-        <label class="f">Notes<textarea id="fNote" maxlength="200" placeholder="Who was there, what it was for…"></textarea></label>
+        <label class="f">Notes<textarea id="fNote" maxlength="200" placeholder="What it was for…"></textarea></label>
         <p class="err" id="formErr" hidden></p>
         <div class="actions">
-          <button class="btn primary" type="submit" id="saveBtn">Add expense</button>
+          <button class="btn primary" type="submit" id="saveBtn">Add spending</button>
           <button class="btn" type="button" id="resetBtn">Clear form</button>
         </div>
       </form>
     </section>
 
+    <!-- 2. Records -->
     <section class="panel" aria-labelledby="listTitle">
-      <div class="listhead">
-        <h2 id="listTitle">Expenses</h2>
-        <div class="filters" id="filters"></div>
-      </div>
-      <div id="list"><p class="empty">Loading expenses…</p></div>
+      <div class="panelhead"><h2 id="listTitle">Records</h2></div>
+      <div class="filterrow" id="userFilters" role="group" aria-label="Filter by user"></div>
+      <div class="totals" id="totals"></div>
+      <div class="filterrow" id="dayFilters" role="group" aria-label="Filter by date"></div>
+      <div id="list"><p class="empty">Loading records…</p></div>
       <div class="foot">
-        <span id="syncNote">Saved to the shared database.</span>
+        <span id="syncNote"></span>
         <button class="btn small" id="copyCsv" type="button">Copy as CSV</button>
       </div>
+    </section>
+
+    <!-- 3. Settle up -->
+    <section class="panel" aria-labelledby="settleTitle">
+      <div class="panelhead"><h2 id="settleTitle">Settle up</h2><p class="muted" id="settleSub"></p></div>
+      <div class="settle" id="settle"></div>
     </section>
   </div>
 </div>
@@ -258,136 +255,117 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
 <script>
 (function(){
 const CATS=[
-  {id:'meal',name:'Meal',plural:'meals',short:'ME',c:'--c1'},
-  {id:'taxi',name:'Taxi',plural:'taxis',short:'TX',c:'--c2'},
-  {id:'other',name:'Others',plural:'others',short:'OT',c:'--c3'}
+  {id:'meal',name:'Meal',short:'ME',c:'--c1'},
+  {id:'taxi',name:'Taxi',short:'TX',c:'--c2'},
+  {id:'other',name:'Others',short:'OT',c:'--c3'}
 ];
 const CURS=['TWD','USD','JPY','KRW','SGD','HKD','EUR','GBP','AUD','THB','MYR','IDR','PHP','VND','INR','CNY'];
 const ZERO_DP=['JPY','KRW','VND','IDR','TWD'];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const catOf=id=>CATS.find(c=>c.id===id)||CATS[CATS.length-1];
-const fmt=(n,cur)=>{const dp=ZERO_DP.includes(cur)?0:2;return (+n||0).toLocaleString('en-US',{minimumFractionDigits:dp,maximumFractionDigits:dp});};
+const dpOf=cur=>ZERO_DP.includes(cur)?0:2;
+const fmt=(n,cur)=>{const dp=dpOf(cur);return (+n||0).toLocaleString('en-US',{minimumFractionDigits:dp,maximumFractionDigits:dp});};
 function toast(m){const el=$('toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2800);}
 const store={
   get(k,s){try{return (s?sessionStorage:localStorage).getItem(k);}catch(e){return null;}},
   set(k,v,s){try{(s?sessionStorage:localStorage).setItem(k,v);}catch(e){}},
   del(k,s){try{(s?sessionStorage:localStorage).removeItem(k);}catch(e){}}
 };
+function today(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);}
 
 /* ---------- database (Supabase RPC) ---------- */
 const CFG=window.TRAVEL_CONFIG||{};
 const configured=!!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/YOUR_/.test(CFG.supabaseUrl+CFG.supabaseAnonKey));
-let pass=null;
+let pass=null,me='',users=[];
 async function rpc(fn,args){
   let r;
   try{
     r=await fetch(CFG.supabaseUrl.replace(/\/+$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',
       headers:{'Content-Type':'application/json',apikey:CFG.supabaseAnonKey,Authorization:'Bearer '+CFG.supabaseAnonKey},
       body:JSON.stringify(args)});
-  }catch(e){const er=new Error('Could not reach the database. Check your internet connection.');er.network=true;throw er;}
+  }catch(e){throw new Error('Could not reach the database. Check your internet connection.');}
   const t=await r.text();let d=null;try{d=t?JSON.parse(t):null;}catch(e){}
   if(!r.ok){const er=new Error((d&&d.message)||('Database error '+r.status));er.code=d&&d.code;throw er;}
   return d;
 }
-const isWrongPass=e=>e&&(e.code==='28P01'||/wrong passcode/i.test(e.message||''));
-function handleErr(e,fallback){
-  if(isWrongPass(e)){lock('The passcode was changed. Enter the new one.');return;}
-  toast(e&&e.message?e.message:fallback);
-}
+const isWrongPin=e=>e&&(e.code==='28P01'||/wrong PIN/i.test(e.message||''));
 
 /* ---------- gate ---------- */
-let me=store.get('tel-name')||'';
-$('nameIn').value=me;
-function showApp(){$('lockView').hidden=true;$('appView').hidden=false;$('meName').textContent=me;}
+function showApp(){
+  $('lockView').hidden=true;$('appView').hidden=false;
+  $('meName').textContent=me;$('meAvatar').textContent=(me.match(/\d+$/)||[me.slice(0,1).toUpperCase()])[0];
+  const sh=users.filter(u=>u.shares).map(u=>u.name);
+  $('settleSub').textContent=sh.length?`All spending is split equally between ${sh.join(', ').replace(/, ([^,]*)$/,' and $1')} (÷ ${sh.length}).`:'';
+}
 function lock(msg){
-  pass=null;store.del('tel-pass',true);
+  pass=null;me='';store.del('tel-pin',true);rows=[];
   $('appView').hidden=true;$('lockView').hidden=false;
   $('passIn').value='';$('lockErr').textContent=msg||'';$('lockErr').hidden=!msg;$('passIn').focus();
 }
+async function signIn(p){
+  const d=await rpc('login',{p});
+  if(!d||!d.name)return false;
+  pass=p;me=d.name;users=Array.isArray(d.users)?d.users:[];store.set('tel-pin',p,true);
+  userFilter='all';dayFilter='all';showApp();resetForm();await loadAll();return true;
+}
 $('lockForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const p=$('passIn').value.trim(),n=$('nameIn').value.trim();
-  const err=!p?'Enter the passcode.':!n?'Enter your name.':'';
-  if(err){$('lockErr').textContent=err;$('lockErr').hidden=false;return;}
+  const p=$('passIn').value.trim();
+  if(!p){$('lockErr').textContent='Enter your PIN.';$('lockErr').hidden=false;return;}
   $('lockBtn').disabled=true;$('lockBtn').textContent='Checking…';$('lockErr').hidden=true;
-  try{
-    const ok=await rpc('verify_pass',{p});
-    if(!ok){$('lockErr').textContent='That passcode is not right. Try again.';$('lockErr').hidden=false;$('passIn').select();return;}
-    pass=p;me=n;store.set('tel-pass',p,true);store.set('tel-name',n);
-    showApp();resetForm();await loadAll();
-  }catch(e2){$('lockErr').textContent=e2.message;$('lockErr').hidden=false;}
-  finally{$('lockBtn').disabled=false;$('lockBtn').textContent='Open ledger';}
+  try{if(!(await signIn(p))){$('lockErr').textContent='That PIN is not right. Try again.';$('lockErr').hidden=false;$('passIn').select();}}
+  catch(e2){$('lockErr').textContent=e2.message;$('lockErr').hidden=false;}
+  finally{$('lockBtn').disabled=false;$('lockBtn').textContent='Sign in';}
 });
 $('lockNow').onclick=()=>lock();
-$('changeName').onclick=()=>{
-  const n=$('meName');n.contentEditable='true';n.focus();
-  const sel=getSelection();sel.selectAllChildren(n);
-  const done=()=>{n.contentEditable='false';const v=n.textContent.trim().slice(0,40);if(v){me=v;store.set('tel-name',v);if(!editingId)$('fPerson').value=v;}n.textContent=me;n.onblur=n.onkeydown=null;};
-  n.onblur=done;n.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();n.blur();}};
-};
 
-/* ---------- state + render ---------- */
-let rows=[],filter='all',month='all',person='all',editingId=null,pendingDelete=null,photo=null;
+/* ---------- state ---------- */
+let rows=[],userFilter='all',dayFilter='all',editingId=null,pendingDelete=null,photo=null;
 const imgCache={};
-
-async function loadAll(quiet){
+async function loadAll(){
   try{
     const d=await rpc('list_expenses',{p:pass});
     rows=(d||[]).map(r=>({...r,date:String(r.date).slice(0,10),total:+r.total,items:Array.isArray(r.items)?r.items:[]}));
-    $('syncNote').textContent='Updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+' · shared with everyone who has the passcode';
+    $('syncNote').textContent='Updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     renderAll();
   }catch(e){
-    if(isWrongPass(e)){lock('The passcode was changed. Enter the new one.');return;}
-    $('list').innerHTML=`<div class="notice bad"><strong>Couldn't load expenses</strong><span>${esc(e.message)}</span><span><button class="btn small" type="button" id="retryLoad">Try again</button></span></div>`;
-    $('retryLoad').onclick=()=>loadAll();
+    if(isWrongPin(e)){lock('Your PIN was changed. Sign in again.');return;}
+    $('list').innerHTML=`<div class="notice"><strong>Couldn't load the records</strong><span>${esc(e.message)}</span><span><button class="btn small" type="button" id="retryLoad">Try again</button></span></div>`;
+    $('retryLoad').onclick=loadAll;
   }
 }
-$('refreshBtn').onclick=()=>loadAll();
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&pass)loadAll(true);});
+$('refreshBtn').onclick=loadAll;
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&pass)loadAll();});
 
-function byCur(xs){const m={};xs.forEach(x=>{m[x.cur]=(m[x.cur]||0)+(+x.total||0);});return Object.entries(m).sort((a,b)=>xs.filter(x=>x.cur===b[0]).length-xs.filter(x=>x.cur===a[0]).length);}
+function byCur(xs){const m={};xs.forEach(x=>{m[x.cur]=(m[x.cur]||0)+(+x.total||0);});return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0]));}
 function curLines(xs){const e=byCur(xs);return e.length?e.map(([c,v])=>`<div>${fmt(v,c)} <span class="muted">${esc(c)}</span></div>`).join(''):'<div>0</div>';}
 function curInline(xs){return byCur(xs).map(([c,v])=>`${fmt(v,c)} ${c}`).join(' · ');}
-function visible(){return rows.filter(x=>(month==='all'||x.date.slice(0,7)===month)&&(person==='all'||x.person===person));}
+function userNames(){return [...new Set([...users.map(u=>u.name),...rows.map(x=>x.person)])];}
+const forUser=()=>rows.filter(x=>userFilter==='all'||x.person===userFilter);
 
-function renderSelectors(){
-  const ms=[...new Set(rows.map(x=>x.date.slice(0,7)))].sort().reverse();
-  if(month!=='all'&&!ms.includes(month))month='all';
-  $('monthSel').innerHTML='<option value="all">All dates</option>'+ms.map(m=>`<option value="${m}"${m===month?' selected':''}>${new Date(m+'-01T00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'})}</option>`).join('');
-  const ps=[...new Set(rows.map(x=>x.person))].sort((a,b)=>a.localeCompare(b));
-  if(person!=='all'&&!ps.includes(person))person='all';
-  $('personSel').innerHTML='<option value="all">Everyone</option>'+ps.map(p=>`<option value="${esc(p)}"${p===person?' selected':''}>${esc(p)}${p===me?' (you)':''}</option>`).join('');
-}
-$('monthSel').onchange=()=>{month=$('monthSel').value;renderSummary();renderList();};
-$('personSel').onchange=()=>{person=$('personSel').value;renderSummary();renderList();};
-
-function renderSummary(){
-  const xs=visible(),owed=xs.filter(x=>x.pay==='personal'),miss=xs.filter(x=>!x.rcpt);
-  const counts=CATS.map(c=>{const n=xs.filter(x=>x.cat===c.id).length;return `<div>${n} <span class="muted">${n===1&&c.id!=='other'?c.name.toLowerCase():c.plural}</span></div>`;}).join('');
-  $('summary').innerHTML=`
-    <div class="stat"><span class="label">Total spend</span><span class="v">${curLines(xs)}</span><span class="s">${xs.length} expense${xs.length===1?'':'s'}</span></div>
-    <div class="stat"><span class="label">Paid with own money</span><span class="v">${curLines(owed)}</span><span class="s">To settle up or claim</span></div>
-    <div class="stat ${miss.length?'warn':'ok'}"><span class="label">Missing receipts</span><span class="v">${miss.length}</span><span class="s">${miss.length?esc(curInline(miss))+' without proof':'Every expense has a receipt'}</span></div>
-    <div class="stat"><span class="label">By type</span><span class="v">${counts}</span></div>`;
-}
+/* ---------- 2. records ---------- */
 function renderFilters(){
-  const opts=[['all','All'],['personal','Own money'],['norcpt','No receipt'],...CATS.map(c=>[c.id,c.name])];
-  $('filters').innerHTML=opts.map(([k,n])=>`<button type="button" class="chip" data-f="${k}" aria-pressed="${filter===k}">${esc(n)}</button>`).join('');
+  const us=[['all','All users'],...userNames().map(n=>[n,n===me?n+' (you)':n])];
+  $('userFilters').innerHTML='<span class="label">User</span>'+us.map(([k,n])=>`<button type="button" class="chip" data-u="${esc(k)}" aria-pressed="${userFilter===k}">${esc(n)}</button>`).join('');
+  $('dayFilters').innerHTML='<span class="label">Show</span>'+[['all','All records'],['today','Today only']].map(([k,n])=>`<button type="button" class="chip" data-d="${k}" aria-pressed="${dayFilter===k}">${n}</button>`).join('');
 }
-$('filters').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;filter=b.dataset.f;renderFilters();renderList();});
-
+$('userFilters').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;userFilter=b.dataset.u;renderRecords();});
+$('dayFilters').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;dayFilter=b.dataset.d;renderRecords();});
+function renderTotals(){
+  const xs=forUser(),t=today(),td=xs.filter(x=>x.date===t),who=userFilter==='all'?'All users':userFilter;
+  $('totals').innerHTML=`
+    <div class="stat"><span class="label">Today's spending</span><span class="v">${curLines(td)}</span><span class="s">${esc(who)} · ${td.length} record${td.length===1?'':'s'}</span></div>
+    <div class="stat"><span class="label">Overall spending</span><span class="v">${curLines(xs)}</span><span class="s">${esc(who)} · ${xs.length} record${xs.length===1?'':'s'}</span></div>`;
+}
 function renderList(){
-  let xs=visible();
-  if(filter==='personal')xs=xs.filter(x=>x.pay==='personal');
-  else if(filter==='norcpt')xs=xs.filter(x=>!x.rcpt);
-  else if(filter!=='all')xs=xs.filter(x=>x.cat===filter);
-  if(!xs.length){$('list').innerHTML=`<p class="empty">${rows.length?'No expenses match this view.':'No expenses yet. Take a photo of a receipt or fill in the form to add the first one.'}</p>`;return;}
+  let xs=forUser();if(dayFilter==='today'){const t=today();xs=xs.filter(x=>x.date===t);}
+  if(!xs.length){$('list').innerHTML=`<p class="empty">${rows.length?'No records match these filters.':'No records yet. Add the first one above.'}</p>`;return;}
   let html='',last='';
   for(const x of xs){
     if(x.date!==last){last=x.date;
       html+=`<div class="day"><span>${new Date(x.date+'T00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span><span class="num">${esc(curInline(xs.filter(y=>y.date===x.date)))}</span></div>`;}
-    const c=catOf(x.cat);
+    const c=catOf(x.cat),mine=x.person===me;
     const items=x.items.length?x.items.slice(0,3).map(i=>esc(i.name)).join(' · ')+(x.items.length>3?` +${x.items.length-3} more`:''):'';
     const thumb=x.has_img?(imgCache[x.id]?`<img src="${imgCache[x.id]}" alt="">`:`<span class="spinner" style="margin:0"></span>`):'';
     html+=`<div class="exp">
@@ -396,34 +374,29 @@ function renderList(){
         <span class="merch">${esc(x.merch||c.name)}</span>
         <span class="sub">${esc(c.name)}${items?' — '+items:''}</span>
         ${x.note?`<span class="sub">${esc(x.note)}</span>`:''}
-        <div class="tags"><span class="pill person">${esc(x.person)}</span><span class="pill ${x.pay==='personal'?'reimb':'corp'}">${x.pay==='personal'?'Own money':'Shared card'}</span>${x.rcpt?'':'<span class="pill norcpt">No receipt</span>'}${x.scanned?'<span class="pill ai">Scanned</span>':''}</div>
+        <div class="tags"><span class="pill ${mine?'me':''}">${esc(x.person)}</span>${x.scanned?'<span class="pill ai">Scanned</span>':''}</div>
       </div>
       <div class="amt"><span class="h">${fmt(x.total,x.cur)}</span><span class="o">${esc(x.cur)}</span>
-        ${pendingDelete===x.id?`<div class="rowact"><button class="btn small danger" type="button" data-yes="${x.id}">Delete</button><button class="btn small" type="button" data-no="1">Keep</button></div>`
+        ${!mine?'':pendingDelete===x.id?`<div class="rowact"><button class="btn small danger" type="button" data-yes="${x.id}">Delete</button><button class="btn small" type="button" data-no="1">Keep</button></div>`
         :`<div class="rowact"><button class="btn small" type="button" data-edit="${x.id}">Edit</button><button class="btn small" type="button" data-del="${x.id}" aria-label="Delete">✕</button></div>`}
       </div></div>`;
   }
   $('list').innerHTML=html;
-  loadThumbs(xs.filter(x=>x.has_img&&!imgCache[x.id]).map(x=>x.id));
+  queueThumbs(xs.filter(x=>x.has_img&&!imgCache[x.id]).map(x=>x.id));
 }
-let thumbQueue=[],thumbActive=0;
-function loadThumbs(ids){
-  ids.forEach(id=>{if(!thumbQueue.includes(id)&&!loadThumbs.busy?.[id])thumbQueue.push(id);});
-  pump();
-}
-loadThumbs.busy={};
+let tq=[],ta=0;const tbusy={};
+function queueThumbs(ids){ids.forEach(id=>{if(!tq.includes(id)&&!tbusy[id])tq.push(id);});pump();}
 function pump(){
-  while(thumbActive<3&&thumbQueue.length){
-    const id=thumbQueue.shift();if(imgCache[id]||loadThumbs.busy[id])continue;
-    thumbActive++;loadThumbs.busy[id]=1;
+  while(ta<3&&tq.length){
+    const id=tq.shift();if(imgCache[id]||tbusy[id])continue;
+    ta++;tbusy[id]=1;
     rpc('get_image',{p:pass,eid:id}).then(src=>{
       if(typeof src==='string'&&src.startsWith('data:image/')){imgCache[id]=src;
         const b=document.querySelector(`[data-img="${id}"]`);if(b)b.innerHTML=`<img src="${src}" alt="">`;}
-    }).catch(()=>{}).finally(()=>{thumbActive--;delete loadThumbs.busy[id];pump();});
+    }).catch(()=>{}).finally(()=>{ta--;delete tbusy[id];pump();});
   }
 }
-function renderAll(){renderSelectors();renderSummary();renderFilters();renderList();}
-
+function renderRecords(){renderFilters();renderTotals();renderList();}
 $('list').addEventListener('click',async e=>{
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.img){const src=imgCache[b.dataset.img];if(src){$('imgBig').src=src;try{$('imgDlg').showModal();}catch(_){}}}
@@ -432,18 +405,53 @@ $('list').addEventListener('click',async e=>{
   else if(b.dataset.no){pendingDelete=null;renderList();}
   else if(b.dataset.yes){
     b.disabled=true;b.textContent='Deleting…';
-    try{await rpc('delete_expense',{p:pass,eid:b.dataset.yes});if(editingId===b.dataset.yes)resetForm();pendingDelete=null;toast('Expense deleted');await loadAll();}
-    catch(err){pendingDelete=null;renderList();handleErr(err,'Could not delete the expense.');}
+    try{await rpc('delete_expense',{p:pass,eid:b.dataset.yes});if(editingId===b.dataset.yes)resetForm();pendingDelete=null;toast('Record deleted');await loadAll();}
+    catch(err){pendingDelete=null;renderList();if(isWrongPin(err))lock('Your PIN was changed. Sign in again.');else toast(err.message||'Could not delete the record.');}
   }
 });
 $('imgClose').onclick=()=>$('imgDlg').close();
 
-/* ---------- form ---------- */
-function curOptions(){const list=[...new Set([...CURS,...rows.map(x=>x.cur)])];$('fCur').innerHTML=list.map(c=>`<option>${esc(c)}</option>`).join('');}
-function ensureCur(cur){if(![...$('fCur').options].some(o=>o.value===cur)){const o=document.createElement('option');o.textContent=cur;$('fCur').appendChild(o);}}
-$('fCat').innerHTML=CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
-curOptions();
+/* ---------- 3. settle up ---------- */
+// For one currency: everyone who shares owes total / (number of sharers). Returns balances and the fewest payments to even out.
+function settleOne(xs,names,sharers){
+  const total=xs.reduce((s,x)=>s+x.total,0),share=sharers.length?total/sharers.length:0;
+  const people=names.map(n=>{const paid=xs.filter(x=>x.person===n).reduce((s,x)=>s+x.total,0);const owes=sharers.includes(n)?share:0;return {name:n,paid,owes,bal:paid-owes};});
+  const cred=people.filter(p=>p.bal>0).map(p=>({n:p.name,v:p.bal})).sort((a,b)=>b.v-a.v);
+  const debt=people.filter(p=>p.bal<0).map(p=>({n:p.name,v:-p.bal})).sort((a,b)=>b.v-a.v);
+  const pays=[];let i=0,j=0;
+  while(i<debt.length&&j<cred.length){
+    const a=Math.min(debt[i].v,cred[j].v);
+    pays.push({from:debt[i].n,to:cred[j].n,amt:a});
+    debt[i].v-=a;cred[j].v-=a;
+    if(debt[i].v<1e-9)i++;if(cred[j].v<1e-9)j++;
+  }
+  return {total,share,people,pays};
+}
+function renderSettle(){
+  const names=userNames(),sharers=users.filter(u=>u.shares).map(u=>u.name);
+  const curs=[...new Set(rows.map(x=>x.cur))].sort();
+  if(!curs.length){$('settle').innerHTML='<p class="empty">Nothing to settle yet.</p>';return;}
+  $('settle').innerHTML=curs.map(cur=>{
+    const s=settleOne(rows.filter(x=>x.cur===cur),names,sharers),min=dpOf(cur)?0.005:0.5;
+    const pays=s.pays.filter(p=>p.amt>=min);
+    const shown=s.people.filter(p=>sharers.includes(p.name)||p.paid>0);
+    return `<div class="cur">
+      <div class="hd"><strong>${esc(cur)}</strong><span class="num">Total ${fmt(s.total,cur)} ÷ ${sharers.length} = ${fmt(s.share,cur)} each</span></div>
+      <div class="bd">
+        <div class="tablewrap"><table>
+          <thead><tr><th>User</th><th>Paid</th><th>Share</th><th>Difference</th></tr></thead>
+          <tbody>${shown.map(p=>`<tr><td>${esc(p.name)}${p.name===me?' (you)':''}</td><td class="num">${fmt(p.paid,cur)}</td><td class="num">${fmt(p.owes,cur)}</td><td class="num ${p.bal>=min?'pos':p.bal<=-min?'neg':''}">${p.bal>=min?'+':''}${fmt(p.bal,cur)}</td></tr>`).join('')}</tbody>
+        </table></div>
+        <div class="pays">${pays.length?pays.map(p=>`<div class="payline"><span class="who">${esc(p.from)} pays ${esc(p.to)}</span><span class="amt">${fmt(p.amt,cur)} ${esc(cur)}</span></div>`).join(''):'<span class="even">All even. Nobody owes anything.</span>'}</div>
+      </div></div>`;
+  }).join('');
+}
+function renderAll(){renderRecords();renderSettle();}
 
+/* ---------- 1. form ---------- */
+$('fCat').innerHTML=CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+$('fCur').innerHTML=CURS.map(c=>`<option>${c}</option>`).join('');
+function ensureCur(cur){if(![...$('fCur').options].some(o=>o.value===cur)){const o=document.createElement('option');o.textContent=cur;$('fCur').appendChild(o);}}
 function addItemRow(name='',amt=''){
   const d=document.createElement('div');d.className='itemrow';
   d.innerHTML=`<input type="text" class="iname" maxlength="60" placeholder="Item" aria-label="Item name"><input type="number" class="iamt num" step="0.01" inputmode="decimal" placeholder="Amount" aria-label="Item amount"><button type="button" aria-label="Remove item">✕</button>`;
@@ -458,61 +466,57 @@ function updateItemSum(){
   if(!it.length){$('itemSum').hidden=true;return;}
   const sum=it.reduce((s,i)=>s+i.amt,0),tot=parseFloat($('fTotal').value);
   let txt=`Items add up to <span class="num">${fmt(sum,cur)} ${esc(cur)}</span>`;
-  if(tot>0&&Math.abs(sum-tot)>0.009)txt+=` · total differs by <span class="num">${fmt(tot-sum,cur)}</span> (tax, tip or service charge)`;
+  if(tot>0&&Math.abs(sum-tot)>0.009)txt+=` · total differs by <span class="num">${fmt(tot-sum,cur)}</span>`;
   if(!(tot>0))txt+=` <button class="btn link" type="button" id="useSum">Use as total</button>`;
   $('itemSum').innerHTML=txt;$('itemSum').hidden=false;
   const u=$('useSum');if(u)u.onclick=()=>{$('fTotal').value=Math.round(sum*100)/100;updateItemSum();};
 }
 $('addItem').onclick=()=>addItemRow().querySelector('.iname').focus();
 $('fCur').onchange=updateItemSum;$('fTotal').oninput=updateItemSum;
-
-function today(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);}
 function resetForm(){
   editingId=null;clearPhoto();
-  $('formTitle').textContent='Add expense';$('saveBtn').textContent='Add expense';
+  $('formTitle').textContent='Add spending';$('saveBtn').textContent='Add spending';
   $('fDate').value=today();$('fCat').value='meal';$('fMerch').value='';$('fTotal').value='';$('fNote').value='';
-  $('fPerson').value=me;$('fPay').value='personal';$('fRcpt').checked=true;$('formErr').hidden=true;$('itemRows').innerHTML='';
+  $('formErr').hidden=true;$('itemRows').innerHTML='';
   const lc=store.get('tel-cur')||'TWD';ensureCur(lc);$('fCur').value=lc;updateItemSum();
 }
 $('resetBtn').onclick=resetForm;
-async function startEdit(id){
+function startEdit(id){
   const x=rows.find(e=>e.id===id);if(!x)return;resetForm();editingId=id;
-  $('formTitle').textContent='Edit expense';$('saveBtn').textContent='Save changes';
-  $('fDate').value=x.date;$('fCat').value=catOf(x.cat).id;$('fMerch').value=x.merch||'';$('fTotal').value=x.total;ensureCur(x.cur);$('fCur').value=x.cur;
-  $('fPerson').value=x.person;$('fPay').value=x.pay;$('fRcpt').checked=x.rcpt;$('fNote').value=x.note||'';
+  $('formTitle').textContent='Edit record';$('saveBtn').textContent='Save changes';
+  $('fDate').value=x.date;$('fCat').value=catOf(x.cat).id;$('fMerch').value=x.merch||'';$('fTotal').value=x.total;ensureCur(x.cur);$('fCur').value=x.cur;$('fNote').value=x.note||'';
   x.items.forEach(i=>addItemRow(i.name,i.amt));
-  if(x.has_img){photo={keep:true,thumb:imgCache[x.id]||null,scanned:x.scanned};if(photo.thumb)showPhoto(photo.thumb);else{$('removePhoto').hidden=false;}setScanMsg('<strong>Receipt photo attached</strong><span class="muted">Take a new photo to replace it.</span>');}
+  if(x.has_img){photo={keep:true,thumb:imgCache[x.id]||null,scanned:x.scanned};if(photo.thumb)showPhoto(photo.thumb);else $('removePhoto').hidden=false;setScanMsg('<strong>Receipt photo attached</strong><span class="muted">Upload a new photo to replace it.</span>');}
   updateItemSum();$('formTitle').scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('entryForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const total=parseFloat($('fTotal').value),cur=$('fCur').value,date=$('fDate').value,who=$('fPerson').value.trim()||me;
-  const err=!date?'Pick the date on the receipt.':!(total>0)?'Enter the total amount paid.':'';
+  const total=parseFloat($('fTotal').value),cur=$('fCur').value,date=$('fDate').value;
+  const err=!date?'Pick the date of the spending.':!(total>0)?'Enter the total amount paid.':'';
   if(err){$('formErr').textContent=err;$('formErr').hidden=false;return;}
   $('formErr').hidden=true;
-  const rec={id:editingId||'',person:who,date,cat:$('fCat').value,merch:$('fMerch').value.trim(),items:readItems(),total,cur,pay:$('fPay').value,rcpt:$('fRcpt').checked,note:$('fNote').value.trim(),
+  const rec={id:editingId||'',date,cat:$('fCat').value,merch:$('fMerch').value.trim(),items:readItems(),total,cur,note:$('fNote').value.trim(),
     img:photo&&!photo.keep?photo.thumb:null,keep_img:!!(photo&&photo.keep),scanned:!!(photo&&photo.scanned)};
   const btn=$('saveBtn'),label=btn.textContent;btn.disabled=true;btn.textContent='Saving…';
   try{
     const id=await rpc('save_expense',{p:pass,e:rec});
-    if(rec.img&&id)imgCache[id]=rec.img;
-    if(!rec.img&&!rec.keep_img&&id)delete imgCache[id];
+    if(id){if(rec.img)imgCache[id]=rec.img;else if(!rec.keep_img)delete imgCache[id];}
     store.set('tel-cur',cur);
-    const wasEdit=!!editingId;resetForm();toast(wasEdit?'Expense updated':'Expense added');await loadAll();
+    const wasEdit=!!editingId;resetForm();toast(wasEdit?'Record updated':'Spending added');await loadAll();
   }catch(err2){
-    if(isWrongPass(err2)){lock('The passcode was changed. Enter the new one.');return;}
+    if(isWrongPin(err2)){lock('Your PIN was changed. Sign in again.');return;}
     $('formErr').textContent=err2.message||'Could not save. Try again.';$('formErr').hidden=false;
   }finally{btn.disabled=false;if(btn.textContent==='Saving…')btn.textContent=label;}
 });
 
-/* ---------- receipt photo + scanning (scanning only inside Claude) ---------- */
-let scanner=null,ctl=null,scanReady=false;
+/* ---------- receipt photo + scan ---------- */
+let scanning=false,scanRun=0;
 function setScanMsg(h){$('scanMsg').innerHTML=h;}
 function showPhoto(src){$('scanThumb').src=src;$('scanThumb').hidden=false;$('removePhoto').hidden=false;}
-function idleMsg(){return scanner?'<strong>Scan a receipt</strong><span class="muted">Take a photo with your phone camera, or choose one you already took. The merchant, items and total are filled in for you to check.</span>'
-  :'<strong>Add a receipt photo</strong><span class="muted">Take a photo with your phone camera, or choose one you already took. Then type the details below.</span>';}
-function clearPhoto(){photo=null;$('scanThumb').hidden=true;$('scanThumb').removeAttribute('src');$('removePhoto').hidden=true;setScanBtn();setScanMsg(idleMsg());}
-$('removePhoto').onclick=()=>{if(ctl)ctl.abort();clearPhoto();};
+const IDLE='<strong>Scan a receipt</strong><span class="muted">Take a photo or upload one. The receipt name, items and total are read from it and filled in below for you to check.</span>';
+function setScanBtns(){$('scanBtn').disabled=$('pickBtn').disabled=scanning;$('retryBtn').hidden=!(photo&&photo.blob&&!scanning);}
+function clearPhoto(){scanRun++;scanning=false;photo=null;$('scanThumb').hidden=true;$('scanThumb').removeAttribute('src');$('removePhoto').hidden=true;setScanBtns();setScanMsg(IDLE);}
+$('removePhoto').onclick=clearPhoto;
 async function decode(file){
   if(window.createImageBitmap){try{return await createImageBitmap(file,{imageOrientation:'from-image'});}catch(e){}}
   return await new Promise((res,rej)=>{const u=URL.createObjectURL(file);const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('decode'));i.src=u;});
@@ -522,64 +526,99 @@ const toBlob=(c,q)=>new Promise(r=>c.toBlob(r,'image/jpeg',q));
 function flash(el){el.classList.add('filled');setTimeout(()=>el.classList.remove('filled'),2500);}
 function applyScan(d){
   const filled=[];
-  if(d.merchant){$('fMerch').value=String(d.merchant).slice(0,80);flash($('fMerch'));filled.push('merchant');}
+  if(d.merchant){$('fMerch').value=String(d.merchant).slice(0,80);flash($('fMerch'));filled.push('receipt name');}
   if(d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date)){$('fDate').value=d.date;flash($('fDate'));filled.push('date');}
-  const cat=CATS.find(c=>c.id===d.category);if(cat){$('fCat').value=cat.id;flash($('fCat'));}
-  if(d.currency&&/^[A-Z]{3}$/.test(String(d.currency).toUpperCase())){const cur=String(d.currency).toUpperCase();ensureCur(cur);$('fCur').value=cur;flash($('fCur'));}
+  if(CATS.some(c=>c.id===d.category)){$('fCat').value=d.category;flash($('fCat'));}
+  if(d.currency){ensureCur(d.currency);$('fCur').value=d.currency;flash($('fCur'));}
   $('itemRows').innerHTML='';
   const items=Array.isArray(d.items)?d.items.slice(0,30):[];
-  items.forEach(i=>{const a=Number(i&&i.amount);addItemRow(String(i&&i.name||'Item').slice(0,60),isFinite(a)?a:'');});
+  items.forEach(i=>addItemRow(String(i.name||'Item').slice(0,60),isFinite(i.amount)?i.amount:''));
   if(items.length)filled.push(items.length+' item'+(items.length>1?'s':''));
-  const extra=[];if(Number(d.tax)>0)extra.push('tax '+d.tax);if(Number(d.tip)>0)extra.push('tip '+d.tip);
-  if(Number(d.total)>0){$('fTotal').value=Number(d.total);flash($('fTotal'));filled.push('total');}
-  if(extra.length&&!$('fNote').value)$('fNote').value='Includes '+extra.join(', ');
-  $('fRcpt').checked=true;updateItemSum();return filled;
+  if(d.total>0){$('fTotal').value=d.total;flash($('fTotal'));filled.push('total');}
+  updateItemSum();return filled;
 }
-const PROMPT=`The attached image is a photo of a purchase receipt from a trip. Read it and reply with only one JSON object, no other text, in exactly this shape:
-{"is_receipt": true, "merchant": "store or company name", "date": "YYYY-MM-DD", "currency": "JPY", "items": [{"name": "item name", "amount": 0}], "tax": 0, "tip": 0, "total": 0, "category": "meal"}
-Rules:
-- merchant: the business name printed on the receipt.
-- items: each purchased line with its line total after quantity. Leave out tax, tip, discounts, change and payment lines. Use [] when there are no item lines.
-- total: the final amount paid, including tax, tip and service charge.
-- Numbers are plain numbers: no currency symbols, no thousands separators.
-- currency: ISO 4217 code, inferred from symbols, language and address (NT$ or a Taiwan address = TWD, ¥ or 円 in Japan = JPY, ₩ = KRW, S$ = SGD, HK$ = HKD).
-- date: the purchase date. Taiwan receipts may use the Minguo year (e.g. 115 = 2026).
-- category: one of "meal", "taxi", "other". Restaurants, cafés, food delivery and convenience-store food or drinks are "meal"; taxis and ride-hailing are "taxi"; everything else is "other".
-- Use null for any field you cannot read. If the image is not a receipt, reply {"is_receipt": false}.`;
+
+/* Text recognition runs in the browser (Tesseract.js); the photo is not sent to any AI service. */
+const OCR_SRC='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let ocrLib=null,ocrWorker=null;
+function loadOcr(){
+  if(!ocrLib)ocrLib=new Promise((res,rej)=>{const s=document.createElement('script');s.src=OCR_SRC;s.onload=()=>res(window.Tesseract);s.onerror=()=>{ocrLib=null;rej(new Error('load'));};document.head.appendChild(s);});
+  return ocrLib;
+}
+const NUM=/\d{1,3}(?:[,，]\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?/g;
+const nums=l=>(l.match(NUM)||[]).map(s=>parseFloat(s.replace(/[,，]/g,''))).filter(n=>isFinite(n));
+const TOTAL_RE=/grand\s*total|total|amount\s*due|balance\s*due|合\s*計|總\s*計|总\s*计|總\s*額|總金額|應付|应付|お会計|お買上|합\s*계/i;
+const SUB_RE=/sub\s*-?\s*total|小\s*計|小\s*计/i;
+const SKIP_RE=/tax|vat|gst|稅|税|service|服務費|cash|change|找零|現金|现金|お釣|visa|master|card|卡號|tel|phone|電話|电话|統編|統一編號|發票|invoice|no\.|#|qty|數量|table|桌號|guest|時間|time|date|日期/i;
+function parseReceipt(text){
+  const lines=text.split('\n').map(l=>l.replace(/\s+/g,' ').trim()).filter(l=>l.length>1);
+  const out={merchant:null,date:null,currency:null,category:null,items:[],total:null};
+  const wordy=l=>(l.match(/[A-Za-z぀-ヿ一-鿿가-힯]/g)||[]).length;
+  out.merchant=(lines.slice(0,6).find(l=>wordy(l)>=2&&wordy(l)>=(l.match(/\d/g)||[]).length)||'').replace(/^[^A-Za-z0-9぀-ヿ一-鿿가-힯]+|[^A-Za-z0-9぀-ヿ一-鿿가-힯)]+$/g,'')||null;
+  // date: year first (2026-11-12, 2026/11/12, 2026年11月12日) or Minguo year (115/11/12)
+  const pad=n=>String(n).padStart(2,'0');
+  for(const l of lines){
+    let m=l.match(/(20\d{2})\s?[-/.年]\s?(\d{1,2})\s?[-/.月]\s?(\d{1,2})/)||null,y;
+    if(m)y=+m[1];else{m=l.match(/(?:^|[^\d])(1[0-3]\d)\s?[-/.年]\s?(\d{1,2})\s?[-/.月]\s?(\d{1,2})/);if(m)y=+m[1]+1911;}
+    if(m&&+m[2]>=1&&+m[2]<=12&&+m[3]>=1&&+m[3]<=31){out.date=`${y}-${pad(m[2])}-${pad(m[3])}`;break;}
+  }
+  const all=text;
+  out.currency=/NT\$|TWD|新台幣|新臺幣|統一編號|統編|電子發票/.test(all)?'TWD':/JPY|円|￥|¥/.test(all)?'JPY':/KRW|₩|원/.test(all)?'KRW':/S\$|SGD/.test(all)?'SGD':/HK\$|HKD/.test(all)?'HKD':/THB|฿/.test(all)?'THB':/\bRM\s?\d|MYR/.test(all)?'MYR':/EUR|€/.test(all)?'EUR':/GBP|£/.test(all)?'GBP':/USD|US\$/.test(all)?'USD':null;
+  out.category=/taxi|cab\b|uber|grab|計程車|计程车|車資|タクシー|택시/i.test(all)?'taxi':/restaurant|cafe|café|coffee|kitchen|bistro|grill|bar\b|diner|pizza|burger|noodle|餐|飯|饭|麵|面館|食堂|茶|咖啡|小吃|料理|ラーメン|居酒屋|식당/i.test(all)?'meal':null;
+  // total: last number on a "total" line (not subtotal); else the largest plausible amount
+  let totalIdx=-1;
+  for(let i=lines.length-1;i>=0;i--){
+    if(TOTAL_RE.test(lines[i])&&!SUB_RE.test(lines[i])){
+      let n=nums(lines[i]);if(!n.length&&lines[i+1])n=nums(lines[i+1]);
+      if(n.length){out.total=n[n.length-1];totalIdx=i;break;}
+    }
+  }
+  if(out.total==null){
+    const cand=lines.filter(l=>!/\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}|\d{1,2}:\d{2}|\d{7,}/.test(l)).flatMap(nums).filter(n=>n>0&&n<1e7);
+    if(cand.length)out.total=Math.max(...cand);
+  }
+  // items: "name ... price" lines before the total
+  const end=totalIdx>=0?totalIdx:lines.length;
+  for(const l of lines.slice(1,end)){
+    if(SKIP_RE.test(l)||TOTAL_RE.test(l)||SUB_RE.test(l))continue;
+    const m=l.match(/^(.*?[A-Za-z぀-ヿ一-鿿가-힯].*?)[\s:：.]*(?:NT\$|[$¥￥₩€£])?\s*(\d{1,3}(?:[,，]\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)\s*[A-Za-z元円]?$/);
+    if(!m)continue;
+    const amt=parseFloat(m[2].replace(/[,，]/g,'')),name=m[1].replace(/[\s:：.x×*@$¥￥]+$/,'').trim();
+    if(name.length<2||!(amt>0)||(out.total&&amt>out.total))continue;
+    out.items.push({name,amount:amt});if(out.items.length>=20)break;
+  }
+  return out;
+}
 async function scan(blob){
-  ctl=new AbortController();const my=ctl;setScanBtn();$('stopBtn').hidden=false;
-  setScanMsg('<strong><span class="spinner"></span>Reading the receipt…</strong><span class="muted">This usually takes 5–30 seconds.</span>');
+  const run=++scanRun;scanning=true;setScanBtns();
+  const say=(a,b)=>{if(run===scanRun)setScanMsg(`<strong><span class="spinner"></span>${a}</strong><span class="muted">${b}</span>`);};
+  say('Getting the scanner ready…','The first scan downloads the reader (a few MB). After that it is quick.');
   try{
-    const d=await scanner.json(PROMPT,{images:[blob],signal:my.signal});
-    if(!d||typeof d!=='object'||d.is_receipt===false){setScanMsg('<strong class="status-warn">This doesn’t look like a receipt</strong><span class="muted">Try a clearer, flatter photo, or type the details in.</span>');return;}
-    const f=applyScan(d);if(photo)photo.scanned=true;
-    setScanMsg(f.length?`<strong class="status-ok">Filled in ${esc(f.join(', '))}</strong><span class="muted">Check the highlighted fields, then save.</span>`:'<strong class="status-warn">Couldn’t read the details</strong><span class="muted">The photo is attached. Type the details in.</span>');
+    const T=await loadOcr();
+    if(!ocrWorker)ocrWorker=await T.createWorker(['eng','chi_tra'],1,{logger:m=>{
+      if(m.status==='recognizing text')say('Reading the receipt… '+Math.round((m.progress||0)*100)+'%','Keep this page open.');
+      else if(/loading|initializ/.test(m.status||''))say('Getting the scanner ready…','The first scan downloads the reader (a few MB). After that it is quick.');}});
+    const {data}=await ocrWorker.recognize(blob);
+    if(run!==scanRun)return;
+    const d=parseReceipt(data.text||'');
+    const f=applyScan(d);if(photo&&f.length)photo.scanned=true;
+    setScanMsg(f.length?`<strong class="status-ok">Filled in ${esc(f.join(', '))}</strong><span class="muted">Please check every field against the receipt before saving. Scans can misread.</span>`
+      :'<strong class="status-warn">Couldn’t read this receipt</strong><span class="muted">The photo is attached. Type the details in, or try a sharper, flatter photo.</span>');
   }catch(e){
-    const code=e&&e.code;
-    if(code==='cancelled')setScanMsg('<strong>Scan stopped</strong><span class="muted">The photo is still attached.</span>');
-    else if(['not_granted','sampling_disabled','images_unavailable','not_declared','capability_disabled'].includes(code)){scanner=null;setScanMsg('<strong>Automatic reading is off</strong><span class="muted">The photo is attached. Type the details in.</span>');}
-    else if(code==='rate_limited')setScanMsg('<strong class="status-warn">Too many scans right now</strong><span class="muted">Wait a minute and try again.</span>');
-    else setScanMsg('<strong class="status-bad">The scan didn’t finish</strong><span class="muted">Try again, or type the details.</span>');
-  }finally{if(ctl===my){ctl=null;$('stopBtn').hidden=true;setScanBtn();}}
+    if(run!==scanRun)return;
+    ocrWorker=null;
+    setScanMsg('<strong class="status-bad">The scanner couldn’t start</strong><span class="muted">The photo is attached. Check your connection and press Scan again, or type the details in.</span>');
+  }finally{if(run===scanRun){scanning=false;setScanBtns();}}
 }
-$('stopBtn').onclick=()=>{if(ctl)ctl.abort();};
 async function handleFile(file){
   if(!file||!/^image\//.test(file.type||'image/')){toast('Choose a photo of the receipt.');return;}
   let img;try{img=await decode(file);}catch(e){toast('That photo could not be opened. Try a JPEG or PNG.');return;}
   let q=0.6,thumb=draw(img,720).toDataURL('image/jpeg',q);
   while(thumb.length>280000&&q>0.3){q-=0.1;thumb=draw(img,640).toDataURL('image/jpeg',q);}
-  const big=await toBlob(draw(img,1800),0.88);
-  photo={blob:big,thumb,scanned:false,keep:false};showPhoto(thumb);setScanBtn();
-  if(scanner)scan(big);
-  else setScanMsg('<strong>Receipt photo attached</strong><span class="muted">Type the details from the receipt below.</span>');
+  const big=await toBlob(draw(img,2000),0.9);
+  photo={blob:big,thumb,scanned:false,keep:false};showPhoto(thumb);scan(big);
 }
 ['fileIn','fileIn2'].forEach(id=>{$(id).onchange=()=>{const f=$(id).files[0];$(id).value='';handleFile(f);};});
-function setScanBtn(){
-  const busy=!!ctl||!scanReady;$('scanBtn').disabled=busy;$('pickBtn').disabled=busy;
-  if(!scanReady)return;
-  $('scanBtn').textContent=scanner?'Take photo & scan':'Take photo';
-  $('retryBtn').hidden=!(scanner&&!busy&&photo&&photo.blob&&!photo.scanned);
-}
 $('scanBtn').onclick=()=>$('fileIn').click();
 $('pickBtn').onclick=()=>$('fileIn2').click();
 $('retryBtn').onclick=()=>{if(photo&&photo.blob)scan(photo.blob);};
@@ -588,29 +627,23 @@ const zone=$('scanZone');
 ['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove('drag');}));
 zone.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)handleFile(f);});
 document.addEventListener('paste',e=>{if($('appView').hidden)return;const f=[...(e.clipboardData&&e.clipboardData.files||[])].find(f=>/^image\//.test(f.type));if(f)handleFile(f);});
-(async()=>{
-  let s=null;
-  try{if(window.claude&&claude.use){s=await claude.use('sample');if(s){const lim=await s.limits().catch(()=>null);if(!lim||!lim.images)s=null;}}}catch(e){s=null;}
-  scanner=s;scanReady=true;if(!photo)setScanMsg(idleMsg());setScanBtn();
-})();
 
 /* ---------- CSV ---------- */
 $('copyCsv').onclick=()=>{
   const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-  const out=[['Date','Paid by','Type','Merchant','Items','Total','Currency','Paid with','Receipt','Notes'].map(q).join(',')];
-  visible().slice().sort((a,b)=>a.date<b.date?-1:1).forEach(x=>out.push([x.date,x.person,catOf(x.cat).name,x.merch,x.items.map(i=>`${i.name} ${i.amt}`).join('; '),x.total,x.cur,x.pay==='personal'?'Own money':'Shared card',x.rcpt?'Yes':'No',x.note].map(q).join(',')));
+  const out=[['Date','User','Type','Receipt name','Items','Total','Currency','Notes'].map(q).join(',')];
+  forUser().slice().sort((a,b)=>a.date<b.date?-1:1).forEach(x=>out.push([x.date,x.person,catOf(x.cat).name,x.merch,x.items.map(i=>`${i.name} ${i.amt}`).join('; '),x.total,x.cur,x.note].map(q).join(',')));
   const csv=out.join('\n');
-  navigator.clipboard.writeText(csv).then(()=>toast('CSV copied. Paste it into a spreadsheet.')).catch(()=>{
-    const ta=document.createElement('textarea');ta.value=csv;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
-    try{document.execCommand('copy');toast('CSV copied');}catch(e){toast('Copy was blocked by this browser.');}ta.remove();});
+  navigator.clipboard.writeText(csv).then(()=>toast('CSV copied. Paste it into a spreadsheet.')).catch(()=>toast('Copy was blocked by this browser.'));
 };
 
 /* ---------- start ---------- */
-setScanMsg(idleMsg());
+window.__tel={settleOne,parseReceipt};
+setScanMsg(IDLE);
 if(!configured){$('lockView').hidden=true;$('setupView').hidden=false;}
 else{
-  const saved=store.get('tel-pass',true);
-  if(saved&&me){pass=saved;showApp();resetForm();loadAll();}
+  const saved=store.get('tel-pin',true);
+  if(saved)signIn(saved).then(ok=>{if(!ok)lock();}).catch(()=>lock('Could not reach the database. Try again.'));
   else $('passIn').focus();
 }
 })();
