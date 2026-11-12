@@ -6,6 +6,6 @@
 // The anon key is meant to be public: the tables are locked and every read or write
 // goes through database functions that check the passcode first.
 window.TRAVEL_CONFIG = {
-  supabaseUrl: "Yhttps://mofmvqfraapaqyfpsgkv.supabase.co/rest/v1/",
+  supabaseUrl: "https://mofmvqfraapaqyfpsgkv.supabase.co/rest/v1/",
   supabaseAnonKey: "sb_publishable_f4AMdvBMyRr6yvxVCom5HA_lzbgPt-E"
 };
