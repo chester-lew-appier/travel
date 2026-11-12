@@ -91,6 +91,14 @@ form{display:grid;gap:11px}
 label.f{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500;min-width:0}
 .f input,.f select,.f textarea,.items input{padding:8px 9px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--fg);width:100%;min-width:0;transition:background-color .6s}
 .f textarea{resize:vertical;min-height:44px}
+.totalf{color:var(--fg);font-weight:700}
+#fTotal{font-family:var(--f-mono);font-size:1.3rem;font-weight:600;padding:9px 10px;border:2px solid var(--accent);background:var(--accent-soft)}
+.catgroup{display:grid;gap:4px;font-size:.8rem;color:var(--muted);font-weight:500}
+.cats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.catopt{display:flex;gap:8px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--fg);font-size:.92rem;font-weight:500;cursor:pointer;min-width:0}
+.catopt input{width:18px;height:18px;margin:0;flex:none;accent-color:var(--accent)}
+.catopt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+@media (max-width:460px){.cats{grid-template-columns:1fr 1fr}}
 .filled{background:var(--accent-soft)!important}
 .err{color:var(--bad);font-size:.84rem}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -200,10 +208,8 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
       </div>
 
       <form id="entryForm" novalidate>
-        <div class="row2">
-          <label class="f">Date<input type="date" id="fDate"></label>
-          <label class="f">Type<select id="fCat"></select></label>
-        </div>
+        <label class="f">Date<input type="date" id="fDate"></label>
+        <div class="catgroup" role="group" aria-labelledby="catLbl"><span id="catLbl">Type</span><div class="cats" id="fCat"></div></div>
         <label class="f">Receipt name (merchant)<input type="text" id="fMerch" maxlength="80" placeholder="e.g. Taiwan Taxi, Din Tai Fung"></label>
         <div class="items">
           <div class="head"><span class="label">Items (optional)</span><button class="btn link" type="button" id="addItem">+ Add item</button></div>
@@ -211,7 +217,7 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
           <div class="itemsum" id="itemSum" hidden></div>
         </div>
         <div class="row2">
-          <label class="f">Total<input type="number" id="fTotal" step="0.01" min="0" inputmode="decimal" placeholder="0.00"></label>
+          <label class="f totalf">Total<input type="number" id="fTotal" step="0.01" min="0" inputmode="decimal" placeholder="0.00"></label>
           <label class="f">Currency<select id="fCur"></select></label>
         </div>
         <label class="f">Notes<textarea id="fNote" maxlength="200" placeholder="What it was for…"></textarea></label>
@@ -264,7 +270,8 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
 (function(){
 const CATS=[
   {id:'meal',name:'Meal',short:'ME',c:'--c1'},
-  {id:'taxi',name:'Taxi',short:'TX',c:'--c2'},
+  {id:'taxi',name:'Travel',short:'TR',c:'--c2'},   // stored as "taxi" so older records keep working
+  {id:'ticket',name:'Ticket',short:'TK',c:'--c4'},
   {id:'other',name:'Others',short:'OT',c:'--c3'}
 ];
 const CURS=['RMB','MYR','SGD'];
@@ -482,7 +489,12 @@ function renderSettle(){
 function renderAll(){renderRecords();renderSettle();}
 
 /* ---------- 1. form ---------- */
-$('fCat').innerHTML=CATS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+// Type: tick boxes where exactly one is ticked at a time.
+$('fCat').innerHTML=CATS.map(c=>`<label class="catopt"><input type="checkbox" name="cat" value="${c.id}"><span>${c.name}</span></label>`).join('');
+const catBoxes=()=>[...$('fCat').querySelectorAll('input')];
+const getCat=()=>(catBoxes().find(b=>b.checked)||{value:'other'}).value;
+const setCat=id=>catBoxes().forEach(b=>{b.checked=b.value===id;});
+$('fCat').addEventListener('change',e=>{if(e.target.matches('input'))setCat(e.target.value);});
 $('fCur').innerHTML=CURS.map(c=>`<option value="${c}">${CUR_LABEL[c]||c}</option>`).join('');
 function ensureCur(cur){if(![...$('fCur').options].some(o=>o.value===cur)){const o=document.createElement('option');o.value=cur;o.textContent=cur;$('fCur').appendChild(o);}}
 function addItemRow(name='',amt=''){
@@ -509,7 +521,7 @@ $('fCur').onchange=updateItemSum;$('fTotal').oninput=updateItemSum;
 function resetForm(){
   editingId=null;clearPhoto();locRun++;loc=null;renderLoc();
   $('formTitle').textContent='Add spending';$('saveBtn').textContent='Add spending';
-  $('fDate').value=today();$('fCat').value='meal';$('fMerch').value='';$('fTotal').value='';$('fNote').value='';
+  $('fDate').value=today();setCat('meal');$('fMerch').value='';$('fTotal').value='';$('fNote').value='';
   $('formErr').hidden=true;$('itemRows').innerHTML='';
   const sc=store.get('tel-cur'),lc=CURS.includes(sc)?sc:DEFAULT_CUR;ensureCur(lc);$('fCur').value=lc;updateItemSum();
 }
@@ -517,7 +529,7 @@ $('resetBtn').onclick=resetForm;
 function startEdit(id){
   const x=rows.find(e=>e.id===id);if(!x)return;resetForm();editingId=id;
   $('formTitle').textContent='Edit record';$('saveBtn').textContent='Save changes';
-  $('fDate').value=x.date;$('fCat').value=catOf(x.cat).id;$('fMerch').value=x.merch||'';$('fTotal').value=x.total;ensureCur(x.cur);$('fCur').value=x.cur;$('fNote').value=x.note||'';
+  $('fDate').value=x.date;setCat(catOf(x.cat).id);$('fMerch').value=x.merch||'';$('fTotal').value=x.total;ensureCur(x.cur);$('fCur').value=x.cur;$('fNote').value=x.note||'';
   x.items.forEach(i=>addItemRow(i.name,i.amt));
   if(x.has_img){photo={keep:true,thumb:imgCache[x.id]||null,scanned:x.scanned};if(photo.thumb)showPhoto(photo.thumb);else $('removePhoto').hidden=false;setScanMsg('<strong>Receipt photo attached</strong><span class="muted">Upload a new photo to replace it.</span>');}
   if(x.lat!=null&&x.lng!=null){loc={lat:+x.lat,lng:+x.lng};renderLoc();}
@@ -529,9 +541,11 @@ $('entryForm').addEventListener('submit',async e=>{
   const err=!date?'Pick the date of the spending.':!(total>0)?'Enter the total amount paid.':'';
   if(err){$('formErr').textContent=err;$('formErr').hidden=false;return;}
   $('formErr').hidden=true;
-  const rec={id:editingId||'',date,cat:$('fCat').value,merch:$('fMerch').value.trim(),items:readItems(),total,cur,note:$('fNote').value.trim(),lat:loc?loc.lat:null,lng:loc?loc.lng:null,
+  const btn=$('saveBtn'),label=btn.textContent;btn.disabled=true;
+  if(locWait&&!loc){btn.textContent='Getting location…';await Promise.race([locWait,new Promise(r=>setTimeout(r,8000))]);}
+  const rec={id:editingId||'',date,cat:getCat(),merch:$('fMerch').value.trim(),items:readItems(),total,cur,note:$('fNote').value.trim(),lat:loc?loc.lat:null,lng:loc?loc.lng:null,
     img:photo&&!photo.keep?photo.thumb:null,keep_img:!!(photo&&photo.keep),scanned:!!(photo&&photo.scanned)};
-  const btn=$('saveBtn'),label=btn.textContent;btn.disabled=true;btn.textContent='Saving…';
+  btn.textContent='Saving…';
   try{
     const id=await rpc('save_expense',{p:pass,e:rec});
     if(id){if(rec.img)imgCache[id]=rec.img;else if(!rec.keep_img)delete imgCache[id];}
@@ -539,8 +553,8 @@ $('entryForm').addEventListener('submit',async e=>{
     const wasEdit=!!editingId;resetForm();toast(wasEdit?'Record updated':'Spending added');await loadAll();
   }catch(err2){
     if(isWrongPin(err2)){lock('Your PIN was changed. Sign in again.');return;}
-    $('formErr').textContent=err2.message||'Could not save. Try again.';$('formErr').hidden=false;
-  }finally{btn.disabled=false;if(btn.textContent==='Saving…')btn.textContent=label;}
+    $('formErr').textContent=err2.code==='23514'?'The database needs updating before this type can be saved: run supabase/setup.sql again.':(err2.message||'Could not save. Try again.');$('formErr').hidden=false;
+  }finally{btn.disabled=false;if(/…$/.test(btn.textContent))btn.textContent=label;}
 });
 
 /* ---------- receipt photo + scan ---------- */
@@ -552,16 +566,21 @@ function renderLoc(msg){
   else if(msg){el.textContent=msg;el.hidden=false;}
   else el.hidden=true;
 }
+let locWait=null;
+const getPos=opts=>new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,opts));
+// Asks the phone where it is. Tries GPS first, then a rougher network position. Saving waits for it.
 function captureLoc(){
-  if(!navigator.geolocation){renderLoc('This browser cannot give a location.');return;}
+  if(!navigator.geolocation){renderLoc('Location not saved: this browser cannot give a location.');return;}
   const run=++locRun;if(!loc)renderLoc('Getting your location…');
-  navigator.geolocation.getCurrentPosition(pos=>{
-    if(run!==locRun)return;
-    loc={lat:+pos.coords.latitude.toFixed(5),lng:+pos.coords.longitude.toFixed(5)};renderLoc();
-  },err=>{
-    if(run!==locRun||loc)return;
-    renderLoc(err.code===1?'Location not saved: allow location access for this site in your browser settings.':'Location not saved: your position could not be found.');
-  },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+  const w=locWait=getPos({enableHighAccuracy:true,timeout:10000,maximumAge:60000})
+    .catch(e=>e&&e.code===1?Promise.reject(e):getPos({enableHighAccuracy:false,timeout:10000,maximumAge:300000}))
+    .then(pos=>{
+      if(run!==locRun)return;
+      loc={lat:+pos.coords.latitude.toFixed(5),lng:+pos.coords.longitude.toFixed(5)};renderLoc();
+    },err=>{
+      if(run!==locRun||loc)return;
+      renderLoc(err&&err.code===1?'Location not saved: location access is blocked. Allow it for this site in your phone or browser settings, then scan again.':'Location not saved: the phone could not find its position.');
+    }).finally(()=>{if(locWait===w)locWait=null;});
 }
 function setScanMsg(h){$('scanMsg').innerHTML=h;}
 function showPhoto(src){$('scanThumb').src=src;$('scanThumb').hidden=false;$('removePhoto').hidden=false;}
@@ -580,7 +599,7 @@ function applyScan(d){
   const filled=[];
   if(d.merchant){$('fMerch').value=String(d.merchant).slice(0,80);flash($('fMerch'));filled.push('receipt name');}
   if(d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date)){$('fDate').value=d.date;flash($('fDate'));filled.push('date');}
-  if(CATS.some(c=>c.id===d.category)){$('fCat').value=d.category;flash($('fCat'));}
+  if(CATS.some(c=>c.id===d.category))setCat(d.category);
   if(d.currency){ensureCur(d.currency);$('fCur').value=d.currency;flash($('fCur'));}
   $('itemRows').innerHTML='';
   const items=Array.isArray(d.items)?d.items.slice(0,30):[];
@@ -616,7 +635,7 @@ function parseReceipt(text){
   }
   const all=text;
   out.currency=/S\$|SGD/.test(all)?'SGD':/\bRM\s?\d|MYR/.test(all)?'MYR':/RMB|CNY|人民币|人民幣|¥|￥/.test(all)?'RMB':null;
-  out.category=/taxi|cab\b|uber|grab|計程車|计程车|車資|タクシー|택시/i.test(all)?'taxi':/restaurant|cafe|café|coffee|kitchen|bistro|grill|bar\b|diner|pizza|burger|noodle|餐|飯|饭|麵|面館|食堂|茶|咖啡|小吃|料理|ラーメン|居酒屋|식당/i.test(all)?'meal':null;
+  out.category=/taxi|cab\b|uber|grab|didi|滴滴|出租|計程車|计程车|車資|车费|高铁|火车|地铁|機票|机票|航空|airline|flight|railway|metro|\bmrt\b|\bbus\b|タクシー|택시/i.test(all)?'taxi':/ticket|admission|門票|门票|入場|入场|景区|景區|museum|博物/i.test(all)?'ticket':/restaurant|cafe|café|coffee|kitchen|bistro|grill|bar\b|diner|pizza|burger|noodle|餐|飯|饭|麵|面館|食堂|茶|咖啡|小吃|料理|ラーメン|居酒屋|식당/i.test(all)?'meal':null;
   // total: last number on a "total" line (not subtotal); else the largest plausible amount
   let totalIdx=-1;
   for(let i=lines.length-1;i>=0;i--){

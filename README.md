@@ -9,7 +9,7 @@ The page has three sections:
 2. **Records** – everyone's records, with today's total and the overall total, filtered by user or all users.
 3. **Settle up** – the total is split equally between user1, user2 and user3, and the page works out who pays whom.
 
-Types are Meal, Taxi and Others. Currencies are RMB (the default), MYR and SGD. Amounts stay in the receipt's currency, and each currency is settled separately.
+Types are Meal, Travel, Ticket and Others. Currencies are RMB (the default), MYR and SGD. Amounts stay in the receipt's currency, and each currency is settled separately.
 
 ## How the data is stored
 

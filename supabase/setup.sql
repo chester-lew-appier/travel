@@ -33,7 +33,7 @@ create table if not exists public.expenses (
   updated_at timestamptz not null default now(),
   person text not null,                    -- who paid (set from the PIN, not typed)
   date date not null,
-  cat text not null check (cat in ('meal', 'taxi', 'other')),
+  cat text not null check (cat in ('meal', 'taxi', 'ticket', 'other')),   -- 'taxi' is shown as Travel
   merch text,
   items jsonb not null default '[]'::jsonb,
   total numeric not null check (total > 0),
@@ -47,6 +47,8 @@ create table if not exists public.expenses (
 alter table public.expenses alter column pay set default 'personal';
 alter table public.expenses add column if not exists lat double precision;  -- where the receipt was scanned
 alter table public.expenses add column if not exists lng double precision;
+alter table public.expenses drop constraint if exists expenses_cat_check;
+alter table public.expenses add constraint expenses_cat_check check (cat in ('meal', 'taxi', 'ticket', 'other'));
 
 alter table public.users add column if not exists can_delete_all boolean not null default false;  -- may use DELETE ALL
 
