@@ -33,6 +33,9 @@ Each person can edit or delete only the records they entered.
 
 ## Good to know
 
+- **Export PDF** in the Records section saves the records currently shown (after the filters), with their
+  receipt photos, as a PDF file.
+
 - **Signing in.** Each person enters their PIN once. The phone or browser remembers it until they press **Sign out**,
   so reloading or reopening the page does not ask again.
 

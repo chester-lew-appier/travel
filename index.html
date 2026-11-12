@@ -248,7 +248,7 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
       <div id="list"><p class="empty">Loading records…</p></div>
       <div class="foot">
         <span id="syncNote"></span>
-        <span class="actions"><button class="btn small" id="copyCsv" type="button">Copy as CSV</button><button class="btn small danger" id="delAllBtn" type="button" hidden>DELETE ALL</button></span>
+        <span class="actions"><button class="btn small" id="exportPdf" type="button">Export PDF</button><button class="btn small" id="copyCsv" type="button">Copy as CSV</button><button class="btn small danger" id="delAllBtn" type="button" hidden>DELETE ALL</button></span>
       </div>
       <div class="notice" id="delAllBox" role="alertdialog" aria-labelledby="delAllQ" hidden>
         <strong id="delAllQ">Delete all records from all users?</strong>
@@ -750,6 +750,113 @@ const zone=$('scanZone');
 ['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove('drag');}));
 zone.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)handleFile(f);});
 document.addEventListener('paste',e=>{if($('appView').hidden)return;const f=[...(e.clipboardData&&e.clipboardData.files||[])].find(f=>/^image\//.test(f.type));if(f)handleFile(f);});
+
+/* ---------- PDF export ----------
+   Pages are drawn on a canvas (so Chinese text and receipt photos come out right) and placed into a PDF with jsPDF. */
+const PDF_SRC='https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+let pdfLib=null;
+function loadPdfLib(){
+  if(!pdfLib)pdfLib=new Promise((res,rej)=>{const el=document.createElement('script');el.src=PDF_SRC;el.onload=()=>res(window.jspdf.jsPDF);el.onerror=()=>{pdfLib=null;rej(new Error('The PDF maker could not be downloaded. Check your connection.'));};document.head.appendChild(el);});
+  return pdfLib;
+}
+const loadImg=src=>new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src=src;});
+async function exportPdf(){
+  const xs=shown().slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+  if(!xs.length){toast('There are no records to export.');return;}
+  const btn=$('exportPdf');btn.disabled=true;
+  try{
+    // 1. receipt photos
+    const need=xs.filter(x=>x.has_img);let got=0;
+    for(const x of need){
+      btn.textContent=`Photos ${++got}/${need.length}…`;
+      if(!imgCache[x.id]){const src=await rpc('get_image',{p:pass,eid:x.id});if(typeof src==='string'&&src.startsWith('data:image/'))imgCache[x.id]=src;}
+    }
+    btn.textContent='Building PDF…';
+    const JsPDF=await loadPdfLib();
+    try{await document.fonts.ready;}catch(e){}
+    // 2. draw pages (A4 at 150 dpi)
+    const W=1240,H=1754,M=80,CW=W-2*M,PW=300,PH=400,GAP=36;
+    const FONT='"IBM Plex Sans","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif';
+    const INK='#16202a',MUTED='#5b6873',LINE='#d3dade',ACC='#0d5c63';
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');g.textBaseline='top';
+    const font=(px,w)=>{g.font=`${w||400} ${px}px ${FONT}`;};
+    const wrap=(text,maxW)=>{
+      const out=[];
+      for(const para of String(text).split('\n')){
+        const toks=para.match(/[⺀-鿿가-힯＀-￯]|[^\s⺀-鿿가-힯＀-￯]+\s*|\s+/g)||[];
+        let line='';
+        for(const t of toks){
+          if(line&&g.measureText((line+t).trimEnd()).width>maxW){out.push(line.trimEnd());line=t.trimStart();}
+          else line+=t;
+          while(g.measureText(line).width>maxW&&line.length>1){let n=line.length-1;while(n>1&&g.measureText(line.slice(0,n)).width>maxW)n--;out.push(line.slice(0,n));line=line.slice(n);}
+        }
+        if(line.trim())out.push(line.trimEnd());
+      }
+      return out.map(l=>l.trim());
+    };
+    const pdf=new JsPDF({unit:'pt',format:'a4',compress:true});
+    let page=0,y=0;
+    const flush=()=>{
+      font(18);g.fillStyle=MUTED;g.textAlign='center';g.fillText('Page '+page,W/2,H-52);g.textAlign='left';
+      if(page>1)pdf.addPage();
+      pdf.addImage(cv.toDataURL('image/jpeg',0.82),'JPEG',0,0,pdf.internal.pageSize.getWidth(),pdf.internal.pageSize.getHeight(),undefined,'FAST');
+    };
+    const newPage=()=>{if(page)flush();page++;g.fillStyle='#fff';g.fillRect(0,0,W,H);y=M;};
+    newPage();
+    // header
+    const who=userFilter==='all'?'All users':userFilter,when=dayFilter==='all'?'all records':dayFilter==='today'?'today ('+today()+')':'yesterday ('+yesterday()+')';
+    font(44,800);g.fillStyle=INK;g.fillText('Trip Expense Ledger',M,y);y+=60;
+    font(22);g.fillStyle=MUTED;g.fillText(`${who} · ${when} · ${xs.length} record${xs.length===1?'':'s'}`,M,y);y+=32;
+    g.fillText(`Exported ${new Date().toLocaleString([], {dateStyle:'medium',timeStyle:'short'})} by ${me}`,M,y);y+=44;
+    g.fillStyle='#e8ecee';g.fillRect(M,y,CW,2);y+=22;
+    font(20,600);g.fillStyle=MUTED;g.fillText('TOTAL',M,y+6);
+    font(30,700);g.fillStyle=ACC;let tx=M+110;
+    for(const [c,v] of byCur(xs)){const t=`${fmt(v,c)} ${c}`;g.fillText(t,tx,y);tx+=g.measureText(t).width+48;}
+    y+=48;
+    font(20);g.fillStyle=INK;
+    const typeLine=CATS.map(c=>{const cx=xs.filter(x=>catOf(x.cat).id===c.id);return cx.length?`${c.name}: ${curInline(cx)}`:'';}).filter(Boolean).join('    ');
+    for(const l of wrap(typeLine,CW)){g.fillText(l,M,y);y+=28;}
+    y+=14;g.fillStyle=INK;g.fillRect(M,y,CW,3);y+=28;
+    // records
+    for(const x of xs){
+      const c=catOf(x.cat),img=x.has_img&&imgCache[x.id]?await loadImg(imgCache[x.id]):null;
+      let iw=0,ih=0;if(img){const k=Math.min(PW/img.width,PH/img.height);iw=Math.round(img.width*k);ih=Math.round(img.height*k);}
+      const tw=img?CW-PW-GAP:CW;
+      // measure
+      font(28,700);const amount=`${fmt(x.total,x.cur)} ${x.cur}`,aw=g.measureText(amount).width;
+      const title=wrap(x.merch||c.name,tw-aw-24);
+      font(20);
+      const meta=`${new Date(x.date+'T00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})} · ${x.person} · ${c.name}`;
+      const items=x.items.slice(0,14),more=x.items.length-items.length;
+      const note=x.note?wrap('Note: '+x.note,tw):[];
+      const textH=title.length*36+6+28+(items.length?10+items.length*27+(more>0?27:0):0)+(note.length?8+note.length*27:0)+(x.lat!=null&&x.lng!=null?8+27:0);
+      const bh=Math.max(textH,ih)+GAP;
+      if(y+bh>H-M-30&&y>M)newPage();
+      // draw
+      let ty=y;
+      font(28,700);g.fillStyle=INK;title.forEach((l,i)=>{g.fillText(l,M,ty+i*36);});
+      g.textAlign='right';g.fillText(amount,M+tw,ty);g.textAlign='left';
+      ty+=title.length*36+6;
+      font(20);g.fillStyle=MUTED;g.fillText(meta,M,ty);ty+=28;
+      if(items.length){ty+=10;g.fillStyle=INK;
+        for(const it of items){const a=fmt(it.amt,x.cur);g.textAlign='right';g.fillText(a,M+tw,ty);g.textAlign='left';
+          let n=String(it.name);const mw=tw-g.measureText(a).width-30;if(g.measureText(n).width>mw){while(n.length>1&&g.measureText(n+'…').width>mw)n=n.slice(0,-1);n+='…';}
+          g.fillText(n,M+16,ty);ty+=27;}
+        if(more>0){g.fillStyle=MUTED;g.fillText(`+${more} more item${more===1?'':'s'}`,M+16,ty);ty+=27;}
+      }
+      if(note.length){ty+=8;g.fillStyle=INK;for(const l of note){g.fillText(l,M,ty);ty+=27;}}
+      if(x.lat!=null&&x.lng!=null){ty+=8;g.fillStyle=MUTED;g.fillText('Location: '+locText(x),M,ty);ty+=27;}
+      if(img){g.drawImage(img,M+CW-iw,y,iw,ih);g.strokeStyle=LINE;g.lineWidth=2;g.strokeRect(M+CW-iw,y,iw,ih);}
+      y+=bh-GAP/2;g.fillStyle=LINE;g.fillRect(M,y,CW,2);y+=GAP/2;
+    }
+    flush();
+    pdf.save(`trip-expenses-${today()}.pdf`);
+    toast(`PDF ready: ${xs.length} record${xs.length===1?'':'s'}, ${page} page${page===1?'':'s'}`);
+  }catch(e){
+    if(isWrongPin(e))lock('Your PIN was changed. Sign in again.');else toast(e&&e.message?e.message:'The PDF could not be made.');
+  }finally{btn.disabled=false;btn.textContent='Export PDF';}
+}
+$('exportPdf').onclick=exportPdf;
 
 /* ---------- CSV ---------- */
 $('copyCsv').onclick=()=>{
