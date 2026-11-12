@@ -287,11 +287,13 @@ function today(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOff
 /* ---------- database (Supabase RPC) ---------- */
 const CFG=window.TRAVEL_CONFIG||{};
 const configured=!!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/YOUR_/.test(CFG.supabaseUrl+CFG.supabaseAnonKey));
+// Accept the project URL with or without a trailing slash or "/rest/v1".
+const BASE=String(CFG.supabaseUrl||'').trim().replace(/\/+$/,'').replace(/\/rest\/v1$/i,'').replace(/\/+$/,'');
 let pass=null,me='',users=[];
 async function rpc(fn,args){
   let r;
   try{
-    r=await fetch(CFG.supabaseUrl.replace(/\/+$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',
+    r=await fetch(BASE+'/rest/v1/rpc/'+fn,{method:'POST',
       headers:{'Content-Type':'application/json',apikey:CFG.supabaseAnonKey,Authorization:'Bearer '+CFG.supabaseAnonKey},
       body:JSON.stringify(args)});
   }catch(e){throw new Error('Could not reach the database. Check your internet connection.');}
