@@ -13,6 +13,7 @@ drop function if exists public.get_image(text, uuid);
 drop function if exists public.save_expense(text, jsonb);
 drop function if exists public.delete_expense(text, uuid);
 drop function if exists public.login(text);
+drop function if exists public.delete_all(text);
 drop function if exists public._require_pass(text);
 drop function if exists public._user(text);
 drop table if exists public.app_secret;
@@ -44,6 +45,8 @@ create table if not exists public.expenses (
   scanned boolean not null default false
 );
 alter table public.expenses alter column pay set default 'personal';
+alter table public.expenses add column if not exists lat double precision;  -- where the receipt was scanned
+alter table public.expenses add column if not exists lng double precision;
 
 -- Lock the tables: the website can never read or write them directly,
 -- only through the functions below, which check the PIN first.
@@ -88,14 +91,15 @@ end $$;
 create function public.list_expenses(p text)
 returns table (
   id uuid, created_at timestamptz, person text, date date, cat text, merch text,
-  items jsonb, total numeric, cur text, note text, scanned boolean, has_img boolean
+  items jsonb, total numeric, cur text, note text, scanned boolean, has_img boolean,
+  lat double precision, lng double precision
 )
 language plpgsql security definer set search_path = public, extensions as $$
 begin
   perform public._user(p);
   return query
     select e.id, e.created_at, e.person, e.date, e.cat, e.merch, e.items, e.total, e.cur,
-           e.note, e.scanned, (e.img is not null)
+           e.note, e.scanned, (e.img is not null), e.lat, e.lng
     from public.expenses e
     order by e.date desc, e.created_at desc;
 end $$;
@@ -127,7 +131,7 @@ begin
   end if;
 
   if coalesce(e->>'id', '') = '' then
-    insert into public.expenses (person, date, cat, merch, items, total, cur, note, img, scanned)
+    insert into public.expenses (person, date, cat, merch, items, total, cur, note, img, scanned, lat, lng)
     values (
       u,
       (e->>'date')::date,
@@ -138,7 +142,9 @@ begin
       upper(left(coalesce(e->>'cur', 'RMB'), 3)),
       left(e->>'note', 200),
       v_img,
-      coalesce((e->>'scanned')::boolean, false)
+      coalesce((e->>'scanned')::boolean, false),
+      (e->>'lat')::double precision,
+      (e->>'lng')::double precision
     )
     returning id into new_id;
   else
@@ -152,6 +158,8 @@ begin
       note = left(e->>'note', 200),
       img = case when v_keep then x.img else v_img end,
       scanned = coalesce((e->>'scanned')::boolean, false),
+      lat = (e->>'lat')::double precision,
+      lng = (e->>'lng')::double precision,
       updated_at = now()
     where x.id = (e->>'id')::uuid and x.person = u
     returning x.id into new_id;
@@ -173,7 +181,19 @@ begin
   end if;
 end $$;
 
+-- Deletes every record from every user. Any signed-in user can do this. Returns how many were deleted.
+create function public.delete_all(p text) returns integer
+language plpgsql security definer set search_path = public, extensions as $$
+declare n integer;
+begin
+  perform public._user(p);
+  delete from public.expenses where true;
+  get diagnostics n = row_count;
+  return n;
+end $$;
+
 grant execute on function public.login(text) to anon;
+grant execute on function public.delete_all(text) to anon;
 grant execute on function public.list_expenses(text) to anon;
 grant execute on function public.get_image(text, uuid) to anon;
 grant execute on function public.save_expense(text, jsonb) to anon;

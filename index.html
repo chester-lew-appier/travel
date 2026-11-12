@@ -82,6 +82,8 @@ button{cursor:pointer}
 .scanbtns{display:flex;flex-wrap:wrap;gap:8px}
 .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-1px;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.locline{font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.locline a,.exp a.sub{color:var(--accent)}
 .status-ok{color:var(--ok)} .status-bad{color:var(--bad)} .status-warn{color:var(--warn)}
 
 form{display:grid;gap:11px}
@@ -192,6 +194,7 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
           <button class="btn" type="button" id="retryBtn" hidden>Scan again</button>
           <button class="btn" type="button" id="removePhoto" hidden>Remove photo</button>
         </div>
+        <div class="locline" id="locLine" hidden></div>
         <input type="file" id="fileIn" accept="image/*" capture="environment" class="sr" tabindex="-1" aria-hidden="true">
         <input type="file" id="fileIn2" accept="image/*" class="sr" tabindex="-1" aria-hidden="true">
       </div>
@@ -229,7 +232,12 @@ dialog::backdrop{background:rgb(0 0 0 / .5)}
       <div id="list"><p class="empty">Loading records…</p></div>
       <div class="foot">
         <span id="syncNote"></span>
-        <button class="btn small" id="copyCsv" type="button">Copy as CSV</button>
+        <span class="actions"><button class="btn small" id="copyCsv" type="button">Copy as CSV</button><button class="btn small danger" id="delAllBtn" type="button">DELETE ALL</button></span>
+      </div>
+      <div class="notice" id="delAllBox" role="alertdialog" aria-labelledby="delAllQ" hidden>
+        <strong id="delAllQ">Delete all records from all users?</strong>
+        <span id="delAllInfo"></span>
+        <span class="actions"><button class="btn danger" type="button" id="delAllYes">Yes</button><button class="btn" type="button" id="delAllNo">No</button></span>
       </div>
     </section>
 
@@ -301,6 +309,7 @@ function showApp(){
   $('settleSub').textContent=sh.length?`All spending is split equally between ${sh.join(', ').replace(/, ([^,]*)$/,' and $1')} (÷ ${sh.length}).`:'';
 }
 function lock(msg){
+  $('delAllBox').hidden=true;
   pass=null;me='';store.del('tel-pin',true);rows=[];
   $('appView').hidden=true;$('lockView').hidden=false;
   $('passIn').value='';$('lockErr').textContent=msg||'';$('lockErr').hidden=!msg;$('passIn').focus();
@@ -376,6 +385,7 @@ function renderList(){
         <span class="merch">${esc(x.merch||c.name)}</span>
         <span class="sub">${esc(c.name)}${items?' — '+items:''}</span>
         ${x.note?`<span class="sub">${esc(x.note)}</span>`:''}
+        ${x.lat!=null&&x.lng!=null?`<a class="sub" href="${mapUrl(x)}" target="_blank" rel="noopener">Location: ${locText(x)}</a>`:''}
         <div class="tags"><span class="pill ${mine?'me':''}">${esc(x.person)}</span>${x.scanned?'<span class="pill ai">Scanned</span>':''}</div>
       </div>
       <div class="amt"><span class="h">${fmt(x.total,x.cur)}</span><span class="o">${esc(x.cur)}</span>
@@ -398,6 +408,8 @@ function pump(){
     }).catch(()=>{}).finally(()=>{ta--;delete tbusy[id];pump();});
   }
 }
+const locText=o=>(+o.lat).toFixed(5)+', '+(+o.lng).toFixed(5);
+const mapUrl=o=>'https://www.google.com/maps?q='+(+o.lat)+','+(+o.lng);
 function renderRecords(){renderFilters();renderTotals();renderList();}
 $('list').addEventListener('click',async e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -412,6 +424,23 @@ $('list').addEventListener('click',async e=>{
   }
 });
 $('imgClose').onclick=()=>$('imgDlg').close();
+$('delAllBtn').onclick=()=>{
+  if(!rows.length){toast('There are no records to delete.');return;}
+  $('delAllInfo').textContent=`This removes ${rows.length} record${rows.length===1?'':'s'} and their receipt photos for everyone. It cannot be undone.`;
+  $('delAllBox').hidden=false;$('delAllNo').focus();
+};
+$('delAllNo').onclick=()=>{$('delAllBox').hidden=true;};
+$('delAllYes').onclick=async()=>{
+  const b=$('delAllYes');b.disabled=true;b.textContent='Deleting…';
+  try{
+    const n=await rpc('delete_all',{p:pass});
+    Object.keys(imgCache).forEach(k=>delete imgCache[k]);
+    $('delAllBox').hidden=true;resetForm();toast(`Deleted ${n||0} record${n===1?'':'s'}`);await loadAll();
+  }catch(err){
+    if(isWrongPin(err)){lock('Your PIN was changed. Sign in again.');return;}
+    toast(err.code==='PGRST202'?'The database needs updating first: run supabase/setup.sql again.':(err.message||'Could not delete the records.'));
+  }finally{b.disabled=false;b.textContent='Yes';}
+};
 
 /* ---------- 3. settle up ---------- */
 // For one currency: everyone who shares owes total / (number of sharers). Returns balances and the fewest payments to even out.
@@ -476,7 +505,7 @@ function updateItemSum(){
 $('addItem').onclick=()=>addItemRow().querySelector('.iname').focus();
 $('fCur').onchange=updateItemSum;$('fTotal').oninput=updateItemSum;
 function resetForm(){
-  editingId=null;clearPhoto();
+  editingId=null;clearPhoto();locRun++;loc=null;renderLoc();
   $('formTitle').textContent='Add spending';$('saveBtn').textContent='Add spending';
   $('fDate').value=today();$('fCat').value='meal';$('fMerch').value='';$('fTotal').value='';$('fNote').value='';
   $('formErr').hidden=true;$('itemRows').innerHTML='';
@@ -489,6 +518,7 @@ function startEdit(id){
   $('fDate').value=x.date;$('fCat').value=catOf(x.cat).id;$('fMerch').value=x.merch||'';$('fTotal').value=x.total;ensureCur(x.cur);$('fCur').value=x.cur;$('fNote').value=x.note||'';
   x.items.forEach(i=>addItemRow(i.name,i.amt));
   if(x.has_img){photo={keep:true,thumb:imgCache[x.id]||null,scanned:x.scanned};if(photo.thumb)showPhoto(photo.thumb);else $('removePhoto').hidden=false;setScanMsg('<strong>Receipt photo attached</strong><span class="muted">Upload a new photo to replace it.</span>');}
+  if(x.lat!=null&&x.lng!=null){loc={lat:+x.lat,lng:+x.lng};renderLoc();}
   updateItemSum();$('formTitle').scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('entryForm').addEventListener('submit',async e=>{
@@ -497,7 +527,7 @@ $('entryForm').addEventListener('submit',async e=>{
   const err=!date?'Pick the date of the spending.':!(total>0)?'Enter the total amount paid.':'';
   if(err){$('formErr').textContent=err;$('formErr').hidden=false;return;}
   $('formErr').hidden=true;
-  const rec={id:editingId||'',date,cat:$('fCat').value,merch:$('fMerch').value.trim(),items:readItems(),total,cur,note:$('fNote').value.trim(),
+  const rec={id:editingId||'',date,cat:$('fCat').value,merch:$('fMerch').value.trim(),items:readItems(),total,cur,note:$('fNote').value.trim(),lat:loc?loc.lat:null,lng:loc?loc.lng:null,
     img:photo&&!photo.keep?photo.thumb:null,keep_img:!!(photo&&photo.keep),scanned:!!(photo&&photo.scanned)};
   const btn=$('saveBtn'),label=btn.textContent;btn.disabled=true;btn.textContent='Saving…';
   try{
@@ -512,7 +542,25 @@ $('entryForm').addEventListener('submit',async e=>{
 });
 
 /* ---------- receipt photo + scan ---------- */
-let scanning=false,scanRun=0;
+let scanning=false,scanRun=0,loc=null,locRun=0;
+function renderLoc(msg){
+  const el=$('locLine');
+  if(loc){el.innerHTML=`<span>Location saved: <a href="${mapUrl(loc)}" target="_blank" rel="noopener">${locText(loc)}</a></span><button class="btn link" type="button" id="locRemove">Remove</button>`;el.hidden=false;
+    $('locRemove').onclick=()=>{locRun++;loc=null;renderLoc();};}
+  else if(msg){el.textContent=msg;el.hidden=false;}
+  else el.hidden=true;
+}
+function captureLoc(){
+  if(!navigator.geolocation){renderLoc('This browser cannot give a location.');return;}
+  const run=++locRun;if(!loc)renderLoc('Getting your location…');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    if(run!==locRun)return;
+    loc={lat:+pos.coords.latitude.toFixed(5),lng:+pos.coords.longitude.toFixed(5)};renderLoc();
+  },err=>{
+    if(run!==locRun||loc)return;
+    renderLoc(err.code===1?'Location not saved: allow location access for this site in your browser settings.':'Location not saved: your position could not be found.');
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+}
 function setScanMsg(h){$('scanMsg').innerHTML=h;}
 function showPhoto(src){$('scanThumb').src=src;$('scanThumb').hidden=false;$('removePhoto').hidden=false;}
 const IDLE='<strong>Scan a receipt</strong><span class="muted">Take a photo or upload one. The receipt name, items and total are read from it and filled in below for you to check.</span>';
@@ -618,7 +666,7 @@ async function handleFile(file){
   let q=0.6,thumb=draw(img,720).toDataURL('image/jpeg',q);
   while(thumb.length>280000&&q>0.3){q-=0.1;thumb=draw(img,640).toDataURL('image/jpeg',q);}
   const big=await toBlob(draw(img,2000),0.9);
-  photo={blob:big,thumb,scanned:false,keep:false};showPhoto(thumb);scan(big);
+  photo={blob:big,thumb,scanned:false,keep:false};showPhoto(thumb);captureLoc();scan(big);
 }
 ['fileIn','fileIn2'].forEach(id=>{$(id).onchange=()=>{const f=$(id).files[0];$(id).value='';handleFile(f);};});
 $('scanBtn').onclick=()=>$('fileIn').click();
@@ -633,8 +681,8 @@ document.addEventListener('paste',e=>{if($('appView').hidden)return;const f=[...
 /* ---------- CSV ---------- */
 $('copyCsv').onclick=()=>{
   const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-  const out=[['Date','User','Type','Receipt name','Items','Total','Currency','Notes'].map(q).join(',')];
-  forUser().slice().sort((a,b)=>a.date<b.date?-1:1).forEach(x=>out.push([x.date,x.person,catOf(x.cat).name,x.merch,x.items.map(i=>`${i.name} ${i.amt}`).join('; '),x.total,x.cur,x.note].map(q).join(',')));
+  const out=[['Date','User','Type','Receipt name','Items','Total','Currency','Notes','Location'].map(q).join(',')];
+  forUser().slice().sort((a,b)=>a.date<b.date?-1:1).forEach(x=>out.push([x.date,x.person,catOf(x.cat).name,x.merch,x.items.map(i=>`${i.name} ${i.amt}`).join('; '),x.total,x.cur,x.note,x.lat!=null&&x.lng!=null?locText(x):''].map(q).join(',')));
   const csv=out.join('\n');
   navigator.clipboard.writeText(csv).then(()=>toast('CSV copied. Paste it into a spreadsheet.')).catch(()=>toast('Copy was blocked by this browser.'));
 };
